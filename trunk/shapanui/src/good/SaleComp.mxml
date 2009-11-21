@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"
+	creationComplete="init();"
+	
+	>
+	<mx:Style>
+	/**
+		@font-face{                       
+		     src:url("assets/simsun.ttc");  
+		     fontFamily: myFont;            
+		     advancedAntiAliasing: true; 
+		  }  
+**/
+		.pbox{
+			horizontal-grid-lines:0;
+			vertical-grid-lines:0;
+			
+			/**
+			background-color:#ffffff;
+			fontFamily: myFont;
+			**/
+		}
+		.list{
+		  	font-size:4;
+		  	padding-bottom:0;
+		  	padding-top:0;
+		  /**
+			fontFamily: myFont;
+			**/
+		}
+		.title{
+			font-size:5;
+		  /**
+			fontFamily: myFont;
+			**/
+		  	horizontal-align : center;
+		}
+		
+		.lb{
+			font-size:13;
+		  	
+		}
+		.textInput{
+			max-height:12;
+			border-style:solid;
+			border-alpha:0.3;
+			background-alpha:0.2;
+			border-color:#000000;
+		}
+	</mx:Style>
+	<mx:Script>
+		<![CDATA[
+			import com.AppShareObj;
+			import mx.managers.PopUpManager;
+			import com.ResultFilter;
+			import com.SharedObjectUtil;
+			import mx.core.Application;
+			import mx.containers.HBox;
+			import mx.controls.Text;
+			import mx.graphics.ImageSnapshot;
+			import mx.controls.Image;
+			import mx.controls.TextArea;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.controls.Alert;
+			import mx.rpc.http.mxml.HTTPService;
+			import flash.xml.XMLDocument;
+			import mx.printing.FlexPrintJob;
+			public static var shopName:String="    时代超市-腾冲店";
+			private var ls:Array=new Array();
+			public var columsArray:Array=new Array();
+			private var seq:int=1;
+			private var total:Number=0;
+			
+			public function comInit(apstage:Stage):void{
+				apstage.addEventListener(KeyboardEvent.KEY_UP,myKeyUp);
+			}
+			private function init():void{
+				
+				codeId.setFocus();
+				
+				shopName=SharedObjectUtil.getShopName();
+				var column1:DataGridColumn= new DataGridColumn();
+             	column1.dataField="seq";
+				column1.headerText="编号";
+				columsArray.push(column1);
+				var column2:DataGridColumn= new DataGridColumn();
+             	column2.dataField="name";
+				column2.headerText="名称";
+				columsArray.push(column2);
+				var column3:DataGridColumn= new DataGridColumn();
+             	column3.dataField="number";
+				column3.headerText="数量";
+				columsArray.push(column3);
+				var column4:DataGridColumn= new DataGridColumn();
+             	column4.dataField="price";
+				column4.headerText="价格";
+				columsArray.push(column4);
+				goodsDg.columns=columsArray;
+				//stage.displayState = StageDisplayState.FULL_SCREEN;
+				
+            	//Application.application.stage.addEventListener(KeyboardEvent.KEY_UP,myKeyUp);
+				//stage.addEventListener(KeyboardEvent.KEY_UP,myKeyUp);
+			}
+			private function setNumber(evt:KeyboardEvent):void{
+				if(evt.keyCode==13){
+		    		codeId.setFocus();
+		    	}
+			}
+			
+			 private function myKeyUp(evt:KeyboardEvent):void{
+			 	if(evt.keyCode==112){ 
+			     	numId.text='1';
+			     }
+			 	if(evt.keyCode==113){ 
+			     	numId.text='2';
+			     }
+			 	if(evt.keyCode==114){ 
+			     	numId.text='3';
+			     }
+			     if(evt.keyCode==115){ 
+			     	numId.text='4';
+			     }
+			     if(evt.keyCode==116){ 
+			     	numId.text='5';
+			     }
+			      if(evt.keyCode==117){ 
+			     	numId.text='6';
+			     }
+			     if(evt.keyCode==118){ 
+			     	numId.text='7';
+			     }
+			     if(evt.keyCode==119){ 
+			     	numId.text='8';
+			     }
+			     if(evt.keyCode==120){ 
+			     	numId.text='9';
+			     }
+			     if(evt.keyCode==121){ 
+			     	numId.text='10';
+			     }
+			     
+			     if(evt.keyCode==16){ 
+			     	momeyId.setFocus();
+			     	momeyId.text="";
+			     }
+			     if(evt.keyCode==17){ 
+			     	codeId.setFocus();
+			     	codeId.text="";
+			     }
+			     //向上箭头
+			     if(evt.keyCode==38){ 
+			     	if(0==goodsDg.selectedIndex)
+			     		goodsDg.selectedIndex=1;
+			     		//Alert.show(""+(goodsDg.selectedIndex-1));
+			     	goodsDg.selectedIndex=goodsDg.selectedIndex-1;
+			     	goodsDg.scrollToIndex(goodsDg.selectedIndex-1);
+			     }
+//			     向下箭头
+			     if(evt.keyCode==40){ 
+			     	//Alert.show(""+(goodsDg.selectedIndex+1));
+			     	goodsDg.selectedIndex=goodsDg.selectedIndex+1;
+			     	goodsDg.scrollToIndex(goodsDg.selectedIndex+1);
+			     }
+//			     删除当前的数据。
+			     if(evt.keyCode==46){ 
+			     	//clear();
+			     	//removeGood(goodsDg.selectedItem);
+			     }
+//			     左箭头
+			     if(evt.keyCode==37){ 
+			     	
+			     	removeGood(goodsDg.selectedItem);
+			     	initMoney();
+			     }
+//			     右箭头
+			     if(evt.keyCode==39){ 
+			     	
+			     	removeGood(goodsDg.selectedItem);
+			     	initMoney();
+			     }
+//			     提交
+			     if(evt.keyCode==34){ 
+			     	submitdoc();
+			     }
+//			     打印
+			      if(evt.keyCode==35){ 
+			     	printPage();
+			     }
+//			    Alert.show(""+evt.keyCode);
+		     }
+		     private function removeGood(obj:Object):void{
+		     	var arr:Array=new Array();
+		     	var index:int=0;
+		     	var seq:int=1;
+		     	for(var k:int;k<this.ls.length;k++){
+		     		var o:Object=this.ls[k];
+		     		
+		     		
+		     		if(o!=obj){
+		     			o["seq"]=seq;
+		     			
+		     			arr.push(o);
+		     			seq++;
+		     		}else{
+		     			index=k;
+		     			var total=Number(totalid.text)-Number(o["number"])*Number(o["price"])
+		     			totalid.text=total+"";
+		     		}
+		     	}
+		     	
+		     	this.ls=arr;
+		     	goodsDg.dataProvider=this.ls;
+		     	goodsDg.selectedIndex=index;
+		     	goodsDg.scrollToIndex(index);
+		     }
+			private function addList(evt:KeyboardEvent):void{
+				if(evt.keyCode==13){
+					setSaleGood();
+					codeId.setFocus();
+					codeId.text='';
+				}
+			}
+			private function setSaleGood():void{
+				var doc:XML=<DATAPACKETS/>
+				doc.@ACTION="sale";
+				doc.@CODE=codeId.text;
+				doc.@NUMBER=numId.text;
+//				var file : FileReference=new FileReference();
+				
+				var tmplService:HTTPService = new HTTPService();
+				//Alert.show(UrlService.getGoodCDSURL());
+				tmplService.url = UrlService.getGoodCDSURL();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				tmplService.send(doc);
+				AppShareObj.loginTest(this);
+			}
+			public function menuctrl(e:ContextMenuEvent):void{
+				//setInfo.enabled=AppShareObj.isPriview("menu-p-sys-mg");
+				//spending.enabled=AppShareObj.isPriview("menu-p-spend");
+			}
+			//添加失败！
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("网络错误，请重试！");
+			}
+			protected function onXMLResult(e:ResultEvent):void{
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				var obj:Object=new Object();
+             		
+             	obj["seq"]=this.seq;
+             	this.seq++;
+             	var name:String=data.@NAME;
+             	if(null==name || ""==name)return ;
+             	obj["name"]=name;
+             	
+             	obj["number"]=data.@NUMBER;
+             	obj["price"]=data.@PRICE;
+             	obj["code"]=data.@CODE;
+             	total=Number(totalid.text);
+             	total+=(Number(data.@PRICE)*Number(data.@NUMBER));
+             	totalid.text=total+"";
+             	this.ls.push(obj);
+             	goodsDg.dataProvider=ls;
+             	goodsDg.selectedIndex=seq-1;
+             	goodsDg.scrollToIndex(seq-1);
+             	initMoney();
+			}
+			private function goodListClick():void{
+				if(AppShareObj.isPriview("sale-price-edit")){
+					var obj:Object=goodsDg.selectedItem;
+					var selWin:GoodInfoAlter =GoodInfoAlter(PopUpManager.createPopUp(this, GoodInfoAlter, true));
+					var point2:Point = new Point();
+					//point2=this.localToGlobal(this.goodsDg);
+					selWin.x=this.stage.width/3;
+	                selWin.y=this.stage.height/3
+	                selWin.setSaleComp(this);
+	                selWin.setDG(goodsDg);
+	                selWin.showCloseButton=true;
+					goodsDg.dataProvider=this.ls;
+					this.calculate();
+				}
+				this.codeId.setFocus();
+				
+			}
+			
+			private function setMoney(evt:KeyboardEvent):void{
+				if(evt.keyCode==13){
+					
+					printId.setFocus();
+				}
+				initMoney();
+			}
+			private function initMoney():void{
+				if(null==momeyId.text){
+					Alert.show("请输入实付金额！");
+					momeyId.setFocus();
+					return ;
+				}
+				shifuid.text=momeyId.text;
+				zhaolingid.text=Number(Number(momeyId.text)-Number(totalid.text)).toFixed(2)+"";
+			}
+			
+			public function calculate():void{
+				total=0;
+				for(var i:int=0;i<this.ls.length;i++){
+					var o:Object=this.ls[i];
+					total+=(Number(o["price"])*Number(o["number"]));
+				}
+				totalid.text=total+"";
+				initMoney();
+			}
+			
+			private function printPage():void{
+				try{
+					//boxid.getStyle("");
+					initMoney();
+					try{
+						var box:Box=new Box();
+						box.width=400;
+						box.styleName="pbox";
+						box.setStyle("horizontalGap",0);
+						box.setStyle("verticalGap",0);
+						this.addChild(box); 
+						var lb:Label=new Label();
+						lb.text=shopName;
+						lb.styleName="title";
+						lb.width=60;
+						
+						box.addChild(lb);
+						for(var i:int=1;i<=this.ls.length;i++){
+							var obj:Object=ls[i-1];
+							var hb:HBox=new HBox();
+							hb.setStyle("horizontalGap",0);
+							hb.setStyle("verticalGap",0);
+							hb.percentWidth=80;
+							var l:Label=new Label();
+							l.height=8;
+							l.width=11;
+							l.styleName="list";
+							l.text=i+"";
+							hb.addChild(l);
+							var nl:Label=new Label();
+							nl.height=8;
+							nl.width=20;
+							nl.styleName="list";
+							nl.text=obj["name"];
+							hb.addChild(nl);
+							var bl:Label=new Label();
+							bl.height=8;
+							bl.width=12;
+							bl.styleName="list";
+							bl.text=obj["number"];
+							hb.addChild(bl);
+							var pl:Label=new Label();
+							pl.height=8;
+							pl.width=16;
+							pl.styleName="list";
+							pl.text=obj["price"];
+							hb.addChild(pl);
+							box.addChild(hb);
+							
+						}
+						
+						var ll:Label=new Label();
+							ll.height=12;
+							ll.styleName="list";
+							ll.text="------------------------------------------";
+							box.addChild(ll);
+						var tl:Label=new Label();
+							tl.height=12;
+							tl.styleName="list";
+							tl.text="合计："+totalid.text+"  圆";
+							box.addChild(tl);
+						var sl:Label=new Label();
+							sl.height=12;
+							sl.styleName="list";
+							sl.text="实付："+shifuid.text+"  圆";
+							box.addChild(sl);
+						var zl:Label=new Label();
+							zl.height=12;
+							zl.styleName="list";
+							zl.text="找零："+zhaolingid.text+"  圆";
+							box.addChild(zl);
+					}catch(ee:Error){
+						Alert.show("初始化数据出错======");
+					}
+					
+					try{
+						//var printJob:FlexPrintJob = new FlexPrintJob();
+						var printJob:PrintJob = new PrintJob();
+		                if(printJob.start()) {
+		                   	
+		                   	var options:PrintJobOptions = new PrintJobOptions();
+							options.printAsBitmap = true;
+
+		                    //printJob.addObject(box); 
+		                    printJob.addPage(box,null,options);
+		                    //Alert.show("printJob.pageHeight="+printJob.pageHeight+"  :::printJob.pageWidth=="+printJob.pageWidth);
+		                    this.removeChild(box);
+		                    printJob.send();
+		                    
+		                }
+		                submitdoc();
+	                }catch(e1e:Error){
+						Alert.show("打印出错======"+e1e);
+					}
+				}catch(e:Error){
+					Alert.show("error======"+e);
+				}
+			}
+			private function clear():void{
+				this.seq=1;
+				totalid.text="0";
+				shifuid.text="0";
+				zhaolingid.text="0";
+				numId.text="1";
+				momeyId.text="0";
+				this.ls=new Array();
+             	goodsDg.dataProvider=ls;
+			}
+			
+			private function submitdoc():void{
+				var doc:XML=<DATAPACKET>
+								<TABLEDATA>
+									<ROWDATA/>
+								</TABLEDATA>
+							</DATAPACKET>;
+				var rows:XML=doc.TABLEDATA.ROWDATA[0];
+				for(var i:int=0;i<this.ls.length;i++){
+					var o:Object=this.ls[i];
+					var code:String=o["code"];
+					var pricestr:String=o["price"];
+					var price:Number=Number(pricestr);
+					//Alert.show(code);
+					//var elt:XML=this.getGoodByCode(code,doc);
+					var elt:XML=this.getGoodByCodePrice(code,price,doc);
+					
+					
+					if(null==elt){
+						var nelt:XML=<ROW/>;
+						nelt.@["CODE"]=code;
+						nelt.@["NUMBER"]=o["number"];
+						nelt.@["PRICE"]=o["price"];
+						rows.appendChild(nelt);
+					}else{
+						
+						var oldNum:Number=Number(elt.@["NUMBER"]);
+						var addNum:Number=Number(o["number"]);
+						elt.@["NUMBER"]=oldNum+addNum;
+					}
+					
+				}
+				
+				//提交到服务器
+				
+				var tmplService:HTTPService = new HTTPService();
+				tmplService.url = UrlService.getGoodCDSURL();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onGoodSubmitResult);
+				;
+				doc.@ACTION="saleUpdate2";
+				//Alert.show(doc.toXMLString());
+				tmplService.send(doc);
+			}
+			
+			private function onGoodSubmitResult(e:ResultEvent):void{
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				var rt:String=data.@STATUS;
+//				Alert.show(rt);
+				if("1"==rt){
+					clear();
+				}else{
+					Alert.show("网络错误，请重试！");
+				}
+			}
+			
+			private function getGoodByCode(code:String,doc:XML):XML{
+				try{
+					var rows:XMLList=doc.TABLEDATA.ROWDATA.ROW;
+					if(null!=rows){
+						//Alert.show(rows.length());
+					}
+					for each(var row:XML in rows){
+						var t_code:String=row.@CODE;
+						if(code == t_code)
+							return row;
+					}
+				}catch(e:Error){
+					Alert.show(e.message);
+				}
+				
+				return null;
+			}
+			private function getGoodByCodePrice(code:String,price:Number,doc:XML):XML{
+				try{
+					var rows:XMLList=doc.TABLEDATA.ROWDATA.ROW;
+					if(null!=rows){
+						//Alert.show(rows.length());
+					}
+					for each(var row:XML in rows){
+						var t_code:String=row.@CODE;
+						var t_price:Number=row.@PRICE;
+						if(code == t_code && price == t_price)
+							return row;
+					}
+				}catch(e:Error){
+					Alert.show(e.message);
+				}
+				
+				return null;
+			}
+		]]>
+	</mx:Script>
+	
+		<mx:HBox width="100%" height="100%" >
+			<mx:Box width="25%" height="100%">
+				<mx:Image source="assets/tianshi1.gif"/>
+			</mx:Box>
+			<mx:Box width="50%" height="100%"  >
+				<mx:VBox   horizontalAlign="center" height="100%" width="100%">
+					<mx:ApplicationControlBar width="100%" height="39" barColor="#e0" alpha="0.9">
+						<mx:Label text="数量：" styleName="lb" />
+						<mx:TextInput width="30" text="1" keyUp="setNumber(event)" id="numId" styleName="textInput"/>
+						<mx:Label text="条码：" styleName="lb"/>
+						<mx:TextInput id="codeId" keyUp="addList(event);" width="50" styleName="textInput"/>
+						<mx:Label text="实付：" styleName="lb"/>
+						
+						<mx:TextInput id="momeyId" keyUp="setMoney(event);" text="0" width="50" styleName="textInput"/>
+						<mx:Button label="打印" styleName="lb" click="printPage()" id="printId" paddingLeft="0" paddingRight="0"/>
+						<mx:Button label="提交" styleName="lb" click="submitdoc();" id="clearId" paddingLeft="0" paddingRight="0"/>
+					</mx:ApplicationControlBar>
+			
+					
+					<mx:Panel id="printP" label="商品列表" height="100%"  width="100%" alpha="0.5">
+						<mx:DataGrid selectionColor="#ff0000" click="this.codeId.setFocus();"  id="goodsDg" width="100%" height="95%" itemClick="goodListClick();" alpha="0.5" styleName="lb"/>
+						<mx:Box  width="100%" height="70" verticalGap="0" horizontalAlign="left" styleName="lb">
+							<mx:HBox verticalGap="0">
+								<mx:Label text="合计："/><mx:Label text="0" id="totalid"/>
+							</mx:HBox>
+							<mx:HBox verticalGap="0">
+								<mx:Label text="实付："/><mx:Label text="0" id="shifuid"/>
+							</mx:HBox>
+							<mx:HBox verticalGap="0">
+								<mx:Label text="找零："/><mx:Label text="0" id="zhaolingid"/>
+							</mx:HBox>
+						</mx:Box>
+					</mx:Panel>
+					
+				</mx:VBox>
+			</mx:Box>
+			<mx:Box width="25%">
+				
+			</mx:Box>
+		</mx:HBox>
+</mx:Box>

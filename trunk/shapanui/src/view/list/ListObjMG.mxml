@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml"
+	layout="horizontal"
+	 width="100%" height="100%">
+	
+	<mx:Script>
+		<![CDATA[
+		import mx.controls.Alert;
+		import view.pioneer.shopDetail;
+		import view.object.ObjectView;
+		import event.list.ListClickEnent;
+		private var tblName:String=null;
+		private var compName:String=null;
+		private var condition:String=null;
+		private var detailp:ObjectView=null;
+		private var addfun:Boolean=true;
+		private var editfun:Boolean=true;
+		private var delfun:Boolean=true;
+		private var dateFormat="YYYY-MM-DD";
+		private var menubarVisible:Boolean=true;
+		
+		private var cols:Array=null;
+        public function setSearchCols(cols:Array):void{
+        	
+        	
+        	this.cols=cols;
+        }
+        
+		public function setMenubarVisible(flg:Boolean):void{
+			this.menubarVisible=flg;
+		}
+		public function setDateFormat(format:String):void{
+				this.dateFormat=format;
+		}
+		public function setAddfun(flg:Boolean):void{
+			this.addfun=flg;
+		}
+		public function setEditfun(flg:Boolean):void{
+			this.editfun=flg;
+		}
+		public function setDelfun(flg:Boolean):void{
+			this.delfun=flg;
+		}
+		
+		public function setMeta(tblName:String,compName:String,condition:String):void{
+			this.tblName=tblName;
+			this.compName=compName;
+			this.condition=condition;
+			
+			init();
+		}
+		private function init():void{
+			this.removeAllChildren();
+			var listview:ListView=new ListView();
+			listview.setSearchCols(this.cols);
+			listview.percentWidth=35;
+			listview.tbName=this.tblName;
+			
+			listview.setCondition(this.condition);
+			listview.addEventListener(ListClickEnent.rowClick,showDetail,false,0,false);
+			this.addChild(listview);
+			detailp=new ObjectView();
+			detailp.setDateFormat(this.dateFormat);
+			this.addChild(detailp);
+			detailp.setListView(listview);
+			
+		}
+		
+		private function showDetail(e:ListClickEnent):void{
+				try{
+					
+					detailp.setAddfun(this.addfun);
+					detailp.setEditfun(this.editfun);
+					detailp.setDelfun(this.delfun);
+					detailp.setMenubarVisible(this.menubarVisible);
+					detailp.setDateFormat(this.dateFormat);
+					detailp.setMeta(e.key,this.tblName);
+					detailp.setComp(this.compName);
+					detailp.setShowClass(null);
+				}catch(e:Error){
+					Alert.show(e.message);
+				}
+			}
+		]]>
+	</mx:Script>
+</mx:Panel>

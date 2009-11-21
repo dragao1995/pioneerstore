@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>   
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"    
+layout="absolute" width="662" height="446">   
+<mx:Script>   
+<![CDATA[
+	import mx.events.ListEvent;
+	import mx.controls.Alert;
+	import mx.events.ItemClickEvent;
+	import flash.net.sendToURL;   
+     
+
+       
+    internal function openUrl():void{   
+      //navigateToURL(new URLRequest("tencent://message/?uin=88881535"));
+      navigateToURL(new URLRequest("http://www.baidu.com"),"self");
+      flash.net.sendToURL(new URLRequest("http://www.baidu.com"));
+    
+      //ExternalInterface.call("eval", "myWin = window.open('tencent://message/?uin=88881535', '100', 'toolbar=1,scrollbars=0,location=1,statusbar=0,menubar=0,resizable=0,width=100,height=200,left=100,top=100');myWin.focus()");
+
+    }   
+    
+    private function menuOpen(item:ListEvent):void{
+    	Alert.show(""+item.rowIndex);
+    }
+]]>   
+</mx:Script>   
+<mx:Button x="72" y="117" label="点击超级链接" fontSize="13" id="link2" click="openUrl()"/>   
+<mx:Text id="link" text="xcopy" x="72" y="47" fontSize="13"/>   
+	<mx:VBox>
+		<mx:Button label="gg1" name="btn1"/>
+		<mx:Button label="gg2" name="btn1"/>
+		<mx:Button label="gg3" name="btn1"/>
+		<mx:Button label="gg4" name="btn1"/>
+	</mx:VBox>
+	
+	<mx:Panel title="TileList Control" layout="vertical" width="360" color="0xffffff" borderAlpha="0.15"
+         paddingTop="10" paddingRight="10" paddingBottom="10" paddingLeft="10" horizontalAlign="center">
+        
+        <mx:Label width="100%" textAlign="center" color="0x323232"
+           text="A TileList control displays items in rows and columns."/>
+           
+        <mx:TileList id="AppSelection" itemClick="menuOpen(event);" width="120" height="458" color="0x323232" columnWidth="126" maxColumns="1"  >
+            <mx:dataProvider>
+                <mx:Array>
+                   
+                    <mx:Object label="Compass" icon="@Embed('assets/tianshi1.gif')"/>
+                    <mx:Object label="Goggles" icon="@Embed('assets/tianshi1.gif')"/>
+                    <mx:Object label="Boots" icon="@Embed('assets/tianshi1.gif')"/>
+                    <mx:Object label="Helmet" icon="@Embed('assets/tianshi1.gif')"/>
+                </mx:Array>
+            </mx:dataProvider>
+        </mx:TileList>
+        
+    </mx:Panel>
+</mx:Application> 

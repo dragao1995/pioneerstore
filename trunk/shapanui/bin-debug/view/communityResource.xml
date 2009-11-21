@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<chart linename="近期趋势" piename="近期饼图" clumnname="近期柱图" name="近期任务曲线">
+  <meate>
+    <mc seq="1" code="val1" name="09-01"/>
+    <mc seq="2" code="val2" name="08-12"/>
+  </meate>
+  <datas>
+    <data name="乐昌" val1="1770" val2="1770" total="3540.0"/>
+    <data name="南雄" val1="15400" val2="15400" total="30800.0"/>
+    <data name="曲江" val1="22200" val2="22200" total="44400.0"/>
+    <data name="仁化" val1="4000" val2="4000" total="8000.0"/>
+    <data name="乳源" val1="43565" val2="43565" total="87130.0"/>
+    <data name="始兴" val1="2037" val2="2037" total="4074.0"/>
+    <data name="市区" val1="86000" val2="86000" total="172000.0"/>
+    <data name="翁源" val1="3220" val2="3220" total="6440.0"/>
+    <data name="新丰" val1="2178" val2="2178" total="4356.0"/>
+  </datas>
+</chart>

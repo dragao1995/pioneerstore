@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?> 
+ <!-- 
+  Copyright 2008 Google Inc.  
+  Licensed under the Apache License, Version 2.0: 
+     http://www.apache.org/licenses/LICENSE-2.0 
+ --> 
+ <mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:maps="com.google.maps.*" layout="absolute" width="100%" height="100%"> 
+   <mx:Panel title="Google Maps API for Flash Demo" width="100%" height="100%"> 
+   <maps:Map  
+     id="map"  
+     key="ABQIAAAA7QUChpcnvnmXxsjC7s1fCxQGj0PqsCtxKvarsoS-iqLdqZSKfxTd7Xf-2rEc_PC9o8IsJde80Wnj4g"  
+     mapevent_mapready="onMapReady(event)" 
+     width="100%" height="100%"/> 
+   </mx:Panel> 
+   <mx:Script> 
+     <![CDATA[
+ 	import good.GoodMGComp;
+ 	import view.tree.TreeObjectMG;
+ 	import view.object.SingleObjectView;
+ 	import mx.managers.PopUpManager;
+ 	import view.selWin.ObjWindow;
+ 	import shapan.sysmg.ObjectBusinessMg;
+ 	import mx.controls.Image; 
+     import com.google.maps.MapEvent; 
+     import com.google.maps.MapMouseEvent; 
+     import com.google.maps.Map; 
+     import com.google.maps.overlays.Marker; 
+     import com.google.maps.overlays.MarkerOptions; 
+     import com.google.maps.InfoWindowOptions; 
+     import com.google.maps.MapType; 
+     import com.google.maps.LatLng; 
+   
+     [Embed(source="assets/tianshi1.gif")] private var purpleIcon:Class 
+      
+     private function onMapReady(event:Event):void { 
+        var markerOptions:MarkerOptions = new MarkerOptions(); 
+        var request:URLRequest = new URLRequest("http://127.0.0.1:8899/store/assets/tianshi1.gif"); 
+		var imageLoader:Loader = new Loader(); 
+		imageLoader.load(request)
+         
+         markerOptions.icon = imageLoader;
+         markerOptions.tooltip = "Purple"; 
+         markerOptions.iconAlignment = MarkerOptions.ALIGN_HORIZONTAL_CENTER; 
+         markerOptions.iconOffset = new Point(2, 2); 
+   
+         var marker:Marker = new Marker(map.getCenter(), markerOptions);
+          marker.addEventListener(MapMouseEvent.CLICK, function(e:Event):void {
+          			//var win:GoodMGComp=new GoodMGComp();
+          	var options2:InfoWindowOptions = new InfoWindowOptions({
+                customContent: new GoodMGComp(),
+                customOffset: new Point(0, 10),
+                width: 300,
+                height: 160,
+                drawDefaultFrame: true
+            });
+                marker.openInfoWindow(options2); 
+                
+            });
+         map.addOverlay(marker); 
+     } 
+     ]]> 
+   </mx:Script> 
+ </mx:Application> 

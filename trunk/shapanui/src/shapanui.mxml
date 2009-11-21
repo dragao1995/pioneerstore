@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"
+	xmlns:info="view.Info.*"
+	creationComplete="init();"
+	xmlns:accordion="view.accordion.*">
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+        <![CDATA[
+        	import shapan.ShapanSystemMg;
+        	import com.SharedObjectUtil;
+        	import mx.rpc.events.ResultEvent;
+        	import mx.rpc.events.FaultEvent;
+        	import com.pioneer.http.UrlService;
+        	import mx.rpc.http.mxml.HTTPService;
+        	import com.AppShareObj;
+    	import shapan.ZLJiankong;
+    	import event.accordion.HAccordionEvent;
+
+    	
+    	import shapan.Status;
+    	import view.Info.InfoView;
+    	import shapan.ZLTuiyan;
+        	
+    	
+    	import mx.controls.Alert;
+    	import mx.managers.PopUpManager;
+    	import view.GoodTypeWin;
+    	import com.google.maps.overlays.MarkerOptions;
+        import com.google.maps.overlays.Marker;
+        import com.google.maps.LatLng;
+        import com.google.maps.Map;
+        import com.google.maps.MapEvent;
+        import com.google.maps.MapMouseEvent;
+        import com.google.maps.MapType;
+        import com.google.maps.MapOptions;
+        import com.google.maps.InfoWindowOptions;
+       ///////////////////////系统主要功能对象/////////////////////////
+       private var zlTuiyan:ZLTuiyan=null;
+       private var zljiankong:ZLJiankong=null;
+       private var info:InfoView=null;
+       private var status :Status=null;
+       private function init():void{
+       	info=new InfoView();
+       	info.percentHeight=100;
+       	info.percentWidth=100;
+       	statusp.addChild(info);
+       	if(null==zlTuiyan){
+			zlTuiyan=new ZLTuiyan();
+	       	zlTuiyan.percentHeight=100;
+	       	zlTuiyan.percentWidth=100;
+		}
+		
+       	mainplace.addChild(zlTuiyan);
+       	zone1.hOpen();
+       	
+       	///////////////////////////添加登陆功能///////////////////////////////
+	           // 如果没有本地信息，
+	            
+	            AppShareObj.loginTest(this);
+	            
+	            //初始化数据提取
+	            var tmplService:HTTPService = new HTTPService();
+				//tmplService.url = "mode/data/detaildoc.xml";
+				//tmplService.url = UrlService.getDetailUrl();
+				if(null==UrlService.getServiceUrl()){
+					tmplService.url = "assets/info.xml";
+				}else{
+					tmplService.url = UrlService.getServiceUrl()+"assets/info.xml";
+				}
+				
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				tmplService.send(null);
+       }
+		private function onFaultHttpService(e:FaultEvent):void
+		{
+			Alert.show("网络连接错误，请重试！");
+		}
+		protected function onXMLResult(e:ResultEvent):void{
+			
+			var tmpdoc:XML=XML(e.result);
+			
+			SharedObjectUtil.setServiceURL(tmpdoc.@url);
+			SharedObjectUtil.setShopName(tmpdoc.@shopName);
+		}
+        public function menuctrl(e:ContextMenuEvent):void{
+			//setInfo.enabled=AppShareObj.isPriview("menu-p-sys-mg");
+			//spending.enabled=AppShareObj.isPriview("menu-p-spend");
+		}
+    private var point1:Point = new Point();
+   
+        
+    private function headCtrl(e:MouseEvent):void{
+			if(heardBar.height==120){
+				heardBar.height=0;
+				mainplace.percentHeight=100;
+			}else{
+				heardBar.height=120;
+				mainplace.height=Application.application.screen.height-heardBar.height-4-4;
+			}
+			if(null!=mainplace)
+				mainplace.percentHeight=100;
+			
+				
+		}
+        
+    	private function openAccordion(ee:HAccordionEvent):void{
+			mainplace.removeAllChildren();
+			var zoneName:String=ee.getAccordionName();
+			if("zone1"==zoneName){
+				
+				if(null==this.zljiankong){
+					this.zljiankong=new ZLJiankong();
+			       	this.zljiankong.percentHeight=100;
+			       	this.zljiankong.percentWidth=100;
+				}
+				
+		       	mainplace.addChild(this.zljiankong);
+			}else if("zone2"==zoneName){
+				if(null==this.zlTuiyan){
+					this.zlTuiyan=new ZLTuiyan();
+			       	this.zlTuiyan.percentHeight=100;
+			       	this.zlTuiyan.percentWidth=100;
+				}
+				
+		       	mainplace.addChild(this.zlTuiyan);
+				
+				
+			}else if("zone3"==zoneName){
+				
+			}else if("zone4"==zoneName){
+				
+			}else if("zone5"==zoneName){
+				var sys:ShapanSystemMg=new ShapanSystemMg();
+				mainplace.addChild(sys);
+			}
+			
+			
+		}
+        ]]>
+  </mx:Script>
+  
+  	
+	<mx:VBox height="100%" width="100%" verticalGap="0">
+		<mx:HBox id="heardBar" styleName="parentbox"  name="testbox" width="100%"  horizontalGap="1" height="120">
+			<accordion:HAccordion id="zone1" haccortionClick="openAccordion(event);" paddingLeft="0" paddingRight="0" width="100%"/>
+			<accordion:HAccordion id="zone2" haccortionClick="openAccordion(event);" paddingLeft="0" paddingRight="0" />
+			<accordion:HAccordion id="zone3" haccortionClick="openAccordion(event);" paddingLeft="0" paddingRight="0" />
+			<accordion:HAccordion id="zone4" haccortionClick="openAccordion(event);" paddingLeft="0" paddingRight="0" />
+			<accordion:HAccordion id="zone5" haccortionClick="openAccordion(event);" paddingLeft="0" paddingRight="0" />
+		</mx:HBox>
+		<mx:Box mouseOut="headCtrl(event)" height="4" width="100%" backgroundColor="yellow"/>
+		<mx:Box id="mainplace" height="100%" width="100%">
+			
+		</mx:Box>
+		<mx:Box id="statusp" horizontalGap="0" verticalGap="0" width="100%" height="40">
+			
+		</mx:Box>
+		
+	</mx:VBox>
+</mx:Application>

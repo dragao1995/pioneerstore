@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import view.list.ListObjMG;
+			import component.TreeComp;
+		import event.tree.TreeEvent;
+		private var treetblName:String=null;
+		private var listtblName:String=null;
+		private var compName:String=null;
+		
+		var listObj:ListObjMG=null;
+		public function setMeta(treetblName:String,listtblName:String,compName:String):void{
+			this.treetblName=treetblName;
+			this.listtblName=listtblName;
+			this.compName=compName;
+			
+			init();
+		}
+		private function init():void{
+//				地域树的初始化
+				var treecomp:TreeComp=new TreeComp();
+				treecomp.percentWidth=30;
+				treecomp.setTblName(treetblName);
+				treecomp.addEventListener(TreeEvent.TREE_SELECTED,areaSelected);
+				this.addChild(treecomp);
+				if(null==listObj){
+					listObj=new ListObjMG();
+					this.addChild(listObj);
+				}
+				
+			}
+			private function areaSelected(ee:TreeEvent):void{
+				var node:Object=ee.treeNode;
+				//Alert.show(node.id)
+				if(null==node)return;
+				this.listObj.setMeta(listtblName,compName, "TYPE ="+node.id);
+				//treeV.setMeta(node,tblName);
+				//treeV.setComp(compName);
+			}			
+		]]>
+	</mx:Script>
+</mx:HBox>

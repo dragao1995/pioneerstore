@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" xmlns:list="view.list.*"
+	creationComplete="init();"
+	>
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+			import view.selWin.ObjSelWindow;
+			import com.ResultFilter;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import com.pioneer.http.UrlService;
+			import mx.controls.Alert;
+			import event.list.ListClickEnent;
+			import mx.rpc.http.mxml.HTTPService;
+			
+			private var tblName1:String=null;
+			private var tblName2:String=null;
+			private var rtblCode:String=null;
+			private var rtblName:String=null;
+			private var rColName1:String=null;
+			private var rColVal1:String=null;
+			private var rColName2:String=null;
+			private var curentKey:String=null;
+			private var obj:Object=null;
+			private var newObj:Object=null;
+			private var lsName:String=null;
+			private function init():void{
+				var listview:ListView=new ListView();
+				
+				listview.percentWidth=100;
+				listview.tbName=this.tblName1;
+				//listview.title=this.tblName1;
+				listview.setCondition("ID<>-1");
+				listview.addEventListener(ListClickEnent.rowClick,groupMg,false,0,false);
+				listviewp.removeAllChildren();
+				listviewp.addChild(listview);
+			}
+			//------------tblName1 表一，tblName2 表二，rtblName关系表，rtblCode关系表编号，rColName1参考表一列，参考表二列---------------
+			public function setMate(tblName1:String,tblName2:String,rtblName:String,rtblCode:String,rColName1:String,rColName2:String):void{
+				this.tblName1=tblName1;
+				this.tblName2=tblName2;
+				this.rtblCode=rtblCode;
+				this.rtblName=rtblName;
+				this.rColName1=rColName1;
+				this.rColName2=rColName2;
+				this.lsName=tblName2+"列表";
+			}
+			private function groupMg(e:ListClickEnent):void{
+				this.rColVal1=e.key;
+				groupList.clear();
+				groupList.tbName=this.tblName2;
+				groupList.setCondition("id in(select "+this.rColName2+" from "+this.rtblCode+" where "+rColName1+" ="+e.key+")");
+			}
+			
+			private function groupclear():void{
+				groupList.clear();
+			}
+			private function setSelSibling(e:ListClickEnent):void{
+				this.obj=e.obj;
+				//Alert.show(this.obj["NAME"]);
+				this.curentKey=e.key;
+			}
+			
+			private function delitem():void{
+				if(null==this.obj){
+					Alert.show("请选中要删除的成员！");
+					return;
+				}
+				var xml:XML=<DATAPACKET/>;
+				xml.@TABLE=this.rtblCode;
+				xml.@ACTION="rdel";
+				var col1:XML=<COL/>;
+				col1.@NAME=this.rColName1;
+				col1.@VALUE=this.rColVal1;
+				xml.appendChild(col1);
+				var col2:XML=<COL/>;
+				col2.@NAME=this.rColName2;
+				col2.@VALUE=this.curentKey;
+				xml.appendChild(col2);
+				var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getCDSActionUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onDataResult);
+				dataService.send(xml);
+			}
+			private function onDataResult(e:ResultEvent):void{
+			
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				this.groupList.delRow(this.curentKey);
+			}
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("网络连接错误，请重试！");
+			}
+			private function addItem():void{
+				var selWin:ObjSelWindow =ObjSelWindow(PopUpManager.createPopUp(this, ObjSelWindow, false));
+				selWin.title=this.tblName2;
+				selWin.setParentBox(this);
+				selWin.setMeta(this.tblName2);
+				var point2:Point = new Point();
+				point2=addbtn.localToGlobal(point2);
+				selWin.x=point2.x+15;
+                selWin.y=point2.y+5;
+			}
+			public function addObj(obj:Object):void{
+				//Alert.show(obj["NAME"]);
+				//如果存在，什么不操作，如果不存在，加入数据库，同时展现出来。
+				//Alert.show("boolean="+groupList.existByKey(obj["ID"]));
+				this.newObj=obj;
+				if(null!=obj){
+					if(!groupList.existByKey(obj["ID"])){
+						var xml:XML=<DATAPACKET/>;
+						xml.@TABLE=this.rtblCode;
+						xml.@ACTION="radd";
+						var col1:XML=<COL/>;
+						col1.@NAME=this.rColName1;
+						col1.@VALUE=this.rColVal1;
+						xml.appendChild(col1);
+						var col2:XML=<COL/>;
+						col2.@NAME=this.rColName2;
+						col2.@VALUE=obj["ID"];
+						xml.appendChild(col2);
+						var dataService:HTTPService = new HTTPService();
+						dataService.url = UrlService.getCDSActionUrl();
+						dataService.contentType="application/xml";     
+						dataService.method="POST";
+						dataService.resultFormat = "e4x";
+						dataService.showBusyCursor=true;
+						dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+						dataService.addEventListener(ResultEvent.RESULT, onAddDataResult);
+						dataService.send(xml);
+						//Alert.show(xml.toXMLString());
+						//groupList.addObj(obj);
+					}else{
+						Alert.show("添加的成员已经存在！");
+					}	
+				}
+				
+			}
+			private function onAddDataResult(e:ResultEvent):void{
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				groupList.addObj(this.newObj);
+				this.newObj=null;
+			}
+		]]>
+	</mx:Script>
+	<mx:HBox width="100%" height="100%">
+		<mx:Box width="25%" id="listviewp" height="100%">
+		</mx:Box>
+		<mx:Box width="75%" height="100%">
+			<mx:ApplicationControlBar height="50" width="60%" horizontalAlign="center">
+				<mx:Button label="添加成员" id="addbtn" click="addItem();"/>
+				<mx:Button label="删除成员" click="delitem();"/>
+				
+			</mx:ApplicationControlBar>
+			<!--
+			<list:ListView id="groupList" title="{this.lsName}" rowClick="setSelSibling(event)" width="60%"/>
+			-->
+			<list:ListView id="groupList" rowClick="setSelSibling(event)" width="60%"/>
+		</mx:Box>
+	</mx:HBox>
+</mx:Panel>

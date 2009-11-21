@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<DATAPACKET>
+  <METADATA>
+    <TABLE LOADCONDITION="" MAXROW="500" NAME="tc_shop">
+      <KEYS>
+        <KEY NAME="ID"/>
+      </KEYS>
+      <FIELD DP="0" ISEDIT="false" 	NAME="ID" TYPE="int" SIZE="11" REMARK="编号"/>
+      <FIELD DP="1"	NAME="NAME" TYPE="varchar" SIZE="600" REMARK="名称"/>
+      <FIELD DP="0" ISEDIT="true" 	NAME="USER_ID" TYPE="int" SIZE="11" REMARK="店主"/>
+      <FIELD DP="1" ISEDIT="true" 	NAME="USER_NUMBER" TYPE="int" SIZE="11" REMARK="人员"/>
+      <FIELD DP="1" ISEDIT="true" 	NAME="CAPITAL" TYPE="int" SIZE="11" REMARK="资本"/>
+      <FIELD DP="0" 				NAME="SHOP_REGIST_TIME" TYPE="varchar" SIZE="18" REMARK="开店时间"/>
+      <FIELD DP="0" 				NAME="NET_SHOP_REGIST_TIME" TYPE="varchar" SIZE="18" REMARK="网上开店时间"/>
+      <FIELD DP="1" ISEDIT="false" NAME="TYPE_ID" TYPE="int" SIZE="11" REMARK="商店类型"/>
+      <FIELD DP="1" 				NAME="LEVEL" TYPE="int" SIZE="11" REMARK="级别"/>
+      <FIELD DP="1" ISEDIT="false" 	NAME="GRADE" TYPE="int" SIZE="11" REMARK="积分"/>
+      <FIELD DP="1" 				NAME="STREET_ID" TYPE="int" SIZE="11" REMARK="所在街道"/>
+      <FIELD DP="0" 				NAME="x" TYPE="double" SIZE="22" REMARK="经度"/>
+      <FIELD DP="0" 				NAME="y" TYPE="double" SIZE="22" REMARK="维度"/>
+      <FIELD DP="1" 				NAME="logo" TYPE="varchar" SIZE="300" REMARK="商店图标"/>
+    </TABLE>
+  </METADATA>
+  <TABLEDATA>
+    <ROWDATA>
+      <ROW ID="4" NAME="001分店" TYPE="特产转卖店" USER_NUMBER="20" CAPITAL="25" LEVEL="2" logo=""/>
+    </ROWDATA>
+  </TABLEDATA>
+
+  
+</DATAPACKET>

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"  xmlns:good="good.*"
+	applicationComplete="init();"
+	backgroundImage="assets/appbg.jpg"
+	width="100%" height="100%"
+	fontSize="13"
+	horizontalGap="0"
+	verticalGap="0"
+	paddingBottom="1"
+	paddingLeft="1"
+	paddingRight="1"
+	paddingTop="2"
+	>
+	
+	<mx:Script>
+		<![CDATA[
+			import view.sys.UserInfo;
+			import com.pioneer.http.UrlService;
+			import flash.sampler.getSetterInvocationCount;
+			import mx.rpc.http.mxml.HTTPService;
+			import com.SharedObjectUtil;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.events.MenuEvent;
+			import view.sys.LoginWindow;
+			import com.AppShareObj;
+			import mx.managers.PopUpManager;
+			import view.list.ListObjWindow;
+			import mx.controls.Alert;
+			import good.GoodMGComp;
+			import good.SaleComp;
+			//////////////////////////////////////
+			var setInfo:ContextMenuItem = null;
+			var sale:ContextMenuItem = null;
+			var spending:ContextMenuItem=null;
+			var screenctl:ContextMenuItem=null;
+			var selfInfoEdit:ContextMenuItem=null;
+			////////////////////////////////////////
+			private var saleInterface:SaleComp=null;
+			private var goodmg:GoodMGComp=null;
+//			private var spendingwin:ListObjWindow =null;
+			private function init():void{
+				saleInterface=new SaleComp();
+				saleInterface.comInit(stage);
+				mainplace.addChild(saleInterface);
+				//菜单控制
+				var menu:ContextMenu = new ContextMenu();
+				//menu.addEventListener(ContextMenuEvent.MENU_SELECT,menuctrl,false,0,false);
+            	setInfo = new ContextMenuItem('维护');
+            	
+            	sale = new ContextMenuItem('销售');
+            	spending = new ContextMenuItem('开支');
+            	screenctl= new ContextMenuItem('全屏');
+            	selfInfoEdit= new ContextMenuItem('我的信息');
+            	menu.customItems.push(setInfo);
+            	menu.customItems.push(sale);
+            	menu.customItems.push(spending);
+            	menu.customItems.push(selfInfoEdit);
+            	menu.customItems.push(screenctl);
+            	
+            	this.contextMenu=menu;
+            	sale.enabled=false;
+            	selfInfoEdit.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+	              //修改个人信息。
+	               var selfwin:UserInfo =null;
+	            	try{
+	            		if(null==selfwin){
+	            			selfwin =UserInfo(PopUpManager.createPopUp(mainplace, UserInfo, true));
+	            			selfwin.title="我的信息";
+	            			selfwin.x=(mainplace.width)/2-selfwin.width/2;
+	                		selfwin.y=mainplace.height/2-selfwin.height/2;
+	            			
+	            		}
+	            	}
+	            	catch(e:Error){
+	            		Alert.show(e.getStackTrace());
+	            	}
+	              
+	            });
+            	setInfo.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+	              sale.enabled=true;
+	              setInfo.enabled=false;
+	              //在此调用系统管理
+	              if(null==this.goodmg){
+	              	this.goodmg=new GoodMGComp();
+	              }
+	              mainplace.removeAllChildren();
+	              mainplace.addChild(this.goodmg);
+	            });
+            	
+            	
+            	sale.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+	              try{
+	              	sale.enabled=false;
+	              	setInfo.enabled=true;
+	              	mainplace.removeAllChildren();
+	              	saleInterface.comInit(stage);
+	              	
+	              }catch(e:Error){
+	              	Alert.show("Error："+e.message);
+	              }
+	              //在此调用销售系统
+	              mainplace.addChild(saleInterface);
+	            });
+	            screenctl.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+	            	try{
+	              	stage.displayState = stage.displayState == StageDisplayState.NORMAL?StageDisplayState.FULL_SCREEN:StageDisplayState.NORMAL;
+	              	if(stage.displayState == StageDisplayState.NORMAL){
+	              		screenctl.caption="全屏";
+	              	}else{
+	              		screenctl.caption="退出全屏";
+	              	}
+	              	
+	              }catch(e:Error){
+	              	Alert.show("Error："+e.message);
+	              }
+	            });
+	            spending.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT,function(e:ContextMenuEvent):void {
+	            	 var spendingwin:ListObjWindow =null;
+	            	try{
+	            		if(null==spendingwin){
+	            			spendingwin =ListObjWindow(PopUpManager.createPopUp(mainplace, ListObjWindow, true));
+	            			spendingwin.title="今日开支明细";
+	            			spendingwin.setDelfun(false);
+	            			spendingwin.minHeight=Application.application.screen.height*2/3;
+	            			spendingwin.minWidth=Application.application.screen.width*2/3;
+	            		}
+	            		
+	              		var now:Date=new Date();
+						var year:int=now.getFullYear();
+						var m:int=now.getMonth();
+						m++;
+						var mstr:String="";
+						if(m<10)
+						mstr="0"+m;
+						else
+						mstr=""+m;
+						
+						var day:int=now.getDate();
+						var dayStr:String="";
+						if(day<10){
+							dayStr="0"+day;
+						}else{
+							dayStr=""+day;
+						}
+						var dateStr:String=year+ mstr+dayStr;
+		              	spendingwin.showCloseButton=true;
+		              	spendingwin.setDateFormat("YYYYMMDD");
+		              	spendingwin.setMeta("开支",null,"DATETIME="+dateStr);
+	              		spendingwin.x=(mainplace.width)/2-spendingwin.width/2;
+	                	spendingwin.y=mainplace.height/2-spendingwin.height/2;
+	              }catch(e:Error){
+	              	Alert.show(e.getStackTrace());
+	              }
+	            });
+	            ///////////////////////////添加登陆功能///////////////////////////////
+	           // 如果没有本地信息，
+	            
+	            AppShareObj.loginTest(this);
+	            
+	            //初始化数据提取
+	            var tmplService:HTTPService = new HTTPService();
+				//tmplService.url = "mode/data/detaildoc.xml";
+				//tmplService.url = UrlService.getDetailUrl();
+				if(null==UrlService.getServiceUrl()){
+					tmplService.url = "assets/info.xml";
+				}else{
+					tmplService.url = UrlService.getServiceUrl()+"assets/info.xml";
+				}
+				
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				tmplService.send(null);
+			}
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("网络连接错误，请重试！");
+			}
+			protected function onXMLResult(e:ResultEvent):void{
+				
+				var tmpdoc:XML=XML(e.result);
+				
+				SharedObjectUtil.setServiceURL(tmpdoc.@url);
+				SharedObjectUtil.setShopName(tmpdoc.@shopName);
+			}
+			public function menuctrl(e:ContextMenuEvent):void{
+				setInfo.enabled=AppShareObj.isPriview("menu-p-sys-mg");
+				spending.enabled=AppShareObj.isPriview("menu-p-spend");
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Box id="mainplace" width="100%" height="100%" fontSize="13">
+		
+	</mx:Box>
+	<mx:Box height="17" width="100%" backgroundColor="#f4f4f4" alpha="0.3" verticalGap="0" horizontalAlign="right">
+		<mx:Label text="版权所有 @ 2008-2014 易科软件联盟！"/>
+		
+	</mx:Box>
+</mx:Application>

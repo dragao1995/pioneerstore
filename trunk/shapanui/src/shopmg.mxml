@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"
+	styleName="label"
+	>
+<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import view.list.ListObjMG;
+			import view.tree.TreeObjectMG;
+			import mx.events.ItemClickEvent;
+			
+			private function typemg():void{
+				var typeMg:TreeObjectMG=new TreeObjectMG();
+						typeMg.percentWidth=80;
+						typeMg.title="商品类型维护";
+						typeMg.setMeta("商品类型",null);
+						mainp.removeAllChildren();
+						mainp.addChild(typeMg);
+			}
+			private function goodmg():void{
+				//var　usergm =new ListObjMG();
+				//usergm.setMeta("用户","user",null);
+				var goodmg:ListObjMG=new ListObjMG();
+				goodmg.setMeta("商品明细",null," code<>'admin'");
+				goodmg.title="商品维护";
+				mainp.removeAllChildren();
+				mainp.addChild(goodmg);
+			}
+			private function zixunmg():void{
+				
+				var zixun:ListObjMG=new ListObjMG();
+				zixun.setMeta("咨询人员",null," ID<>-1");
+				zixun.title="咨询人员";
+				mainp.removeAllChildren();
+				mainp.addChild(zixun);
+			}
+			private function dizhimg():void{
+				
+				var dizhi:ListObjMG=new ListObjMG();
+				dizhi.setMeta("公司办公地址",null," ID<>-1");
+				dizhi.title="公司办公地址";
+				mainp.removeAllChildren();
+				mainp.addChild(dizhi);
+			}
+			private function systemmg(e:ItemClickEvent):void{
+				var lab:String=e.label;
+				if("商品类型"==lab){
+					typemg()
+				}else if("商品维护"==lab){
+					goodmg();
+				}else if("咨询人员维护"==lab){
+					zixunmg();
+				}else if("公司地址维护"==lab){
+					dizhimg();
+				}
+				
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HDividedBox width="100%" height="100%">
+		<mx:Box width="20%" height="100%">
+			<mx:Accordion width="100%" height="100%" headerStyleName="label">
+				<mx:Panel headerHeight="15" label="商品管理" width="100%" horizontalAlign="left" paddingLeft="19" height="100%" verticalAlign="top">
+					<mx:RadioButtonGroup id="systemgroup" itemClick="systemmg(event);" />
+					<mx:RadioButton groupName="systemgroup" label="商品类型" styleName="label" />
+					<mx:RadioButton groupName="systemgroup" label="商品维护" styleName="label" />
+					<mx:RadioButton groupName="systemgroup" label="咨询人员维护" styleName="label" />
+					<mx:RadioButton groupName="systemgroup" label="公司地址维护" styleName="label" />
+					<mx:RadioButton groupName="systemgroup" label="功能维护" styleName="label" visible="false"/>
+				</mx:Panel>
+			</mx:Accordion>	
+					
+					
+				
+		</mx:Box>
+		<mx:Box width="80%" height="100%" id="mainp">
+			
+			
+		</mx:Box>
+	</mx:HDividedBox>
+</mx:Application>

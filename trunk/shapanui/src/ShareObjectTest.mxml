@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" 
+	creationComplete="init();"
+	layout="absolute">
+	<mx:Script
+		>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.utils.ObjectUtil;
+			import com.SharedObjectUtil;
+			
+			private function init():void{
+				
+				//Alert.show(SharedObjectUtil.getServiceURL());
+				ipid.text=SharedObjectUtil.getServiceURL();
+			}
+			
+			private function setUrl():void{
+				SharedObjectUtil.setServiceURL(ipid.text);
+			}
+		]]>
+	</mx:Script>
+	<mx:Box>
+		<mx:TextInput id="ipid" text="1111111111"/>
+		<mx:Button label="seturl" click="setUrl();"/>
+	</mx:Box>
+	
+</mx:Application>

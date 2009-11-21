@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"
+	creationComplete="init();"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import com.google.maps.MapAction;
+			import com.google.maps.Color;
+			import com.google.maps.Alpha;
+			import shapan.window.SearchWin;
+			import mx.core.Application;
+			import shapan.window.MyFolder;
+			import mx.managers.PopUpManager;
+			import shapan.window.MarkerWin;
+			import mx.controls.menuClasses.MenuBarItem;
+			import com.google.maps.overlays.Marker;
+			import com.google.maps.MapType;
+			import com.google.maps.LatLng;
+			import com.google.maps.MapOptions;
+			import com.google.maps.controls.MapTypeControlOptions;
+        	import com.google.maps.controls.MapTypeControl;
+        	import com.google.maps.controls.ZoomControlOptions;
+        	import com.google.maps.controls.ZoomControl;
+        	import com.google.maps.controls.ControlPosition;
+        	import com.google.maps.controls.ScaleControlOptions;
+        	import com.google.maps.controls.ScaleControl;
+        	private function init():void{
+		       	addContextMenu();
+		       	//this.map.setCenter(new LatLng(24.996016,113.59314), 8, MapType.NORMAL_MAP_TYPE); 
+		     }
+        	private function onMapPreinitialize(event:Event):void {
+	            var options:MapOptions = new MapOptions({ 
+				  backgroundFillStyle: { 
+				    alpha: Alpha.OPAQUE, 
+				    color: Color.GRAY14 
+				  }, 
+				  crosshairs: false, 
+				  crosshairsStrokeStyle: { 
+				    thickness: 1, 
+				    color: Color.BLACK, 
+				    alpha: 1, 
+				    pixelHinting: false 
+				  }, 
+				  controlByKeyboard: false, 
+				  overlayRaising: true, 
+				  doubleClickMode: MapAction.ACTION_PAN_ZOOM_IN, 
+				  dragging: true, 
+				  continuousZoom: false, 
+				  mapType: null, 
+				  mapTypes: null, 
+				  center: new LatLng(0, 0), 
+				  zoom: 1 ,
+				  mouseClickRange: 2 
+				});
+				
+	            var opts:MapOptions = new MapOptions();
+	            opts.zoom = 10;
+	            opts.center = new LatLng(24.996016,113.59314);
+	            opts.mapType = MapType.NORMAL_MAP_TYPE;
+	            
+	            options.zoom = 10;
+	            options.center = new LatLng(24.996016,113.59314);
+	            options.mapType = MapType.NORMAL_MAP_TYPE;
+	           // opts.backgroundFillStyle=
+	            this.map.setInitOptions(options);
+	        }
+	        private function onMapReady(event:Event):void {
+	        	var topRight:ControlPosition =  new ControlPosition(ControlPosition.ANCHOR_TOP_RIGHT, 16, 10);
+		         //var bottomRight:ControlPosition = new ControlPosition(ControlPosition.ANCHOR_BOTTOM_RIGHT, 16, 10);
+		 
+		         var myZoomControl:ZoomControl = new ZoomControl(new ZoomControlOptions({position: topRight}));
+		         //var myMapTypeControl:MapTypeControl = new MapTypeControl(new MapTypeControlOptions({position:bottomRight}));
+		 
+		         map.addControl(myZoomControl);
+		        //map.addControl(myMapTypeControl);
+	 			 map.addControl(new MapTypeControl());
+	
+				addContextMenu();
+	        }
+	         private function addContextMenu():void {
+        	
+            var menu:ContextMenu = new ContextMenu();
+            
+          	//var markmenu:ContextMenuItem=new ContextMenuItem();
+            
+            var biaoji:ContextMenuItem = new ContextMenuItem('添加标记');
+            
+            
+            
+            
+            var shoucang:ContextMenuItem = new ContextMenuItem('我的焦点');
+            
+            
+            var search:ContextMenuItem = new ContextMenuItem('业务检索');
+            
+            shoucang.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+              var floderWin:MyFolder =MyFolder(PopUpManager.createPopUp(tuiyangp, MyFolder, false));
+              floderWin.setMap(map);
+              floderWin.showCloseButton=true;
+              floderWin.x=0;
+              floderWin.y=0;
+               //map.addOverlay(marker);
+            });
+           
+            
+            biaoji.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+              //var latlng:LatLng = map.fromViewportToLatLng(new Point(e.mouseTarget.mouseX, e.mouseTarget.mouseY));
+              // var marker:Marker = new Marker(latlng);
+               //map.addOverlay(marker);
+               var markerWin:MarkerWin =MarkerWin(PopUpManager.createPopUp(tuiyangp, MarkerWin, true));
+				markerWin.setMate(map,e);
+				markerWin.title="添加标记";
+				
+				
+				markerWin.x=e.mouseTarget.mouseX;
+                markerWin.y=e.mouseTarget.mouseY;
+            });
+            search.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+              var searchWin:SearchWin=SearchWin(PopUpManager.createPopUp(tuiyangp, SearchWin, false));
+              searchWin.setMap(map);
+				//markerWin.setMate(map,e);
+				searchWin.title="检索";
+				
+				
+				searchWin.x=1;
+                searchWin.y=1;
+            });
+            
+            
+            
+            
+            
+           
+            menu.customItems.push(biaoji);
+			menu.hideBuiltInItems();
+            menu.customItems.push(shoucang);
+            menu.customItems.push(search);
+           
+            
+            //this.map.contextMenu = menu;
+            this.contextMenu=menu;
+        }
+		]]>
+	</mx:Script>
+	
+	<mx:Box width="100%" height="100%" id="tuiyangp">
+		<maps:Map xmlns:maps="com.google.maps.*" 
+			    id="map" 
+			    mapevent_mappreinitialize="onMapPreinitialize(event)"
+			    mapevent_mapready="onMapReady(event)"
+			    width="100%" height="100%" 
+			    key="ABQIAAAA7QUChpcnvnmXxsjC7s1fCxQGj0PqsCtxKvarsoS-iqLdqZSKfxTd7Xf-2rEc_PC9o8IsJde80Wnj4g"/>
+	</mx:Box>
+</mx:Box>

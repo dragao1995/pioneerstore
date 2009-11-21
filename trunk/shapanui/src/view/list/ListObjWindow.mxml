@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"
+	close="PopUpManager.removePopUp(this);"
+	preinitialize="init();"
+	 >
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+		
+			private var listObj:ListObjMG=null;
+			
+			private var addfun:Boolean=true;
+			private var editfun:Boolean=true;
+			private var delfun:Boolean=true;
+			private var dateFormat="YYYY-MM-DD";
+			private var menubarVisible:Boolean=true;
+			private var cols:Array=null;
+	        public function setSearchCols(cols:Array):void{
+	        	this.cols=cols;
+	        	//Alert.show("cols");
+	        }
+			public function setMenubarVisible(flg:Boolean):void{
+				this.menubarVisible=flg;
+			}
+			public function setAddfun(flg:Boolean):void{
+				this.addfun=flg;
+			}
+			public function setEditfun(flg:Boolean):void{
+				this.editfun=flg;
+			}
+			public function setDelfun(flg:Boolean):void{
+				this.delfun=flg;
+			}
+			public function setDateFormat(format:String):void{
+				this.dateFormat=format;
+			}
+			var closebtn:ContextMenuItem =null;
+			
+			private function init():void{
+				//Alert.show("window init");
+				listObj=new ListObjMG();
+				listObj.percentHeight=100;
+				listObj.percentWidth=100;
+				listObj.setAddfun(this.addfun);
+				listObj.setEditfun(this.editfun);
+				listObj.setDelfun(this.delfun);
+				listObj.setMenubarVisible(this.menubarVisible);
+				listObj.setSearchCols(this.cols);
+				this.addChild(listObj);
+				////////////////添加快捷菜单////////////////
+				var menu:ContextMenu = new ContextMenu();
+            	closebtn = new ContextMenuItem('关闭');
+            	closebtn.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+              		closeWin();
+	               
+	            });
+	            menu.customItems.push(closebtn);
+	            this.contextMenu=menu;
+			}
+			private function closeWin():void{
+				PopUpManager.removePopUp(this);
+			}
+			public function setMeta(tblName:String,compName:String,condition:String):void{
+				if(null==listObj){
+					listObj=new ListObjMG();
+					listObj.percentHeight=100;
+					listObj.percentWidth=100;
+					listObj.setAddfun(this.addfun);
+					listObj.setEditfun(this.editfun);
+					listObj.setDelfun(this.delfun);
+					listObj.setMenubarVisible(this.menubarVisible);
+					
+					this.addChild(listObj);
+				}
+				listObj.setSearchCols(this.cols);
+				listObj.setAddfun(this.addfun);
+				listObj.setEditfun(this.editfun);
+				listObj.setDelfun(this.delfun);
+				listObj.setMenubarVisible(this.menubarVisible);
+				listObj.setDateFormat(this.dateFormat);
+				listObj.setMeta(tblName,compName,condition);
+			}
+		]]>
+	</mx:Script>
+</mx:TitleWindow>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"
+	close="PopUpManager.removePopUp(this);"
+	 width="240" height="200">
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.managers.PopUpManager;
+			private var dg:DataGrid=null;
+			private var obj:Object=null;
+			private var saleCom:SaleComp=null;
+			
+			public function setSaleComp(saleCom:SaleComp):void{
+				this.saleCom=saleCom;
+			}
+			public function setDG(dg:DataGrid):void{
+				var obj:Object=dg.selectedItem;
+				
+				if(null!=obj){
+					number.text=obj["number"];
+					price.text=obj["price"];
+					this.dg=dg;
+					this.obj=obj;
+				}
+			}
+			
+			public function cancel():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function okfun():void{
+				//var obj:Object=this.dg.selectedItem;
+				//Alert.show("this.dg.selectedItem=="+this.dg.selectedItem);
+				obj["number"]=this.number.text;
+				obj["price"]=this.price.text;
+				this.dg.dataProvider=this.dg.dataProvider;
+				if(null!=this.saleCom)
+					this.saleCom.calculate();
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<mx:Panel width="100%" height="100%" verticalAlign="middle">
+		<mx:HBox>
+			<mx:Label text="数量："/><mx:TextInput id="number" width="80"/>
+		</mx:HBox>
+		<mx:HBox>
+			<mx:Label text="价格："/><mx:TextInput id="price" width="80"/><mx:Label text="圆"/>
+		</mx:HBox>
+		<mx:HBox horizontalAlign="center">
+			<mx:Button label="确定" click="okfun();"/>
+			<mx:Button label="取消" click="cancel();"/>
+		</mx:HBox>
+	</mx:Panel>
+	
+</mx:TitleWindow>

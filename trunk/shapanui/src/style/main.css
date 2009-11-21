@@ -1,0 +1,236 @@
+/* CSS file */
+Alert{
+	font-size:13;
+}
+DataTip{
+    fontFamily: "Arial";
+    fontSize: 13; 
+    fontWeight:normal;
+}
+ToolTip{
+    fontFamily: "Arial";
+    fontSize: 13; 
+    fontWeight:normal;
+}
+.accordionHead{
+    fontFamily: "Arial";
+    fontSize: 13; 
+    fontWeight:normal;
+}
+.datagrid{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:normal;
+	color:#123456;
+	text-selected-color:#ff0000;
+	text-align:center;
+	background-color:#e1feba;
+	border-color:#e1feba;
+}
+.date{
+		
+}
+.btn{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:normal;
+	color:#123456;
+	text-selected-color:#ff0000;
+	text-align:center;
+	background-color:#e1feba;
+	border-color:#e1feba;
+}
+.addNewbtn{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:normal;
+	color:#123456;
+	text-selected-color:#ff0000;
+	text-align:center;
+	background-color:#e1feba;
+	border-color:#e1feba;
+}
+.editbtn{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:normal;
+	color:#123456;
+	text-selected-color:#ff0000;
+	text-align:center;
+	background-color:#e1feba;
+	border-color:#e1feba;
+}
+.detailbtn{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:normal;
+	color:#123456;
+	text-selected-color:#ff0000;
+	text-align:center;
+	background-color:#e1feba;
+	border-color:#e1feba;
+}
+.okbtn{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	color:#123456;
+	text-align:center;
+	text-roll-over-color:#7AF106;
+	icon:Embed(source="../view/images/ok.gif");
+}
+.searchbtn{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	color:#123456;
+	text-align:center;
+	text-roll-over-color:#7AF106;
+	icon:Embed(source="../view/images/ok.gif");
+}
+.delbtn{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	color:#123456;
+	text-align:center;
+	text-roll-over-color:#7AF106;
+	icon:Embed(source="../view/images/del.gif");
+}
+/*tabStyle*/
+.tabStyle{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:normal;
+	text-selected-color:#ff0000;
+	text-align:left;
+	color:#123456;
+	item-selection-color:#ffaaaa;
+	selection-color:#ffaaaa;
+}
+
+.selectedTab{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:normal;
+	text-align:center;
+	color:#ff0000;
+	background-color:#ff9999;
+}
+
+.accordion{
+	header-height:25;
+	header-style-name:label;
+	
+	label-align:center;
+	label-size-limit:13;
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:normal;
+	text-align:center;
+	background-color:#ff9999;
+}
+
+
+.tree{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	text-align:center;
+	color:#123456;
+	text-roll-over-color:#1529EB;
+	roll-over-color:#ECC7E5;
+	
+	text-selected-color:#ff0000;
+	folder-closed-icon:Embed(source="../view/images/base.gif");
+	folder-open-icon:Embed(source="../view/images/baseop.gif");
+	default-leaf-icon:Embed(source="../view/images/page.gif");
+	label-align:left;
+
+}
+.label{
+	font-size:13;
+	color:#123456;
+	font-style:normal;
+	font-family:Arial;
+}
+.wlabel{
+	font-size:13;
+	color:#123456;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:bold;
+}
+.redlabel{
+	
+	font-size:13;
+	color:#ff0000;
+	font-style:normal;
+	
+}
+.htmlLabel{
+		font-size:13;
+		color:#0000ff;
+		text-roll-over-color:#1529EB;
+		roll-over-color:#ECC7E5;
+}
+.textInput{
+	font-size:13;
+	
+	background-color:#fff4f4;
+	border-style:solid;
+	border-alpha:0.5;
+	border-color:#000000;
+	padding-bottom:0;
+	padding-top:0;
+	horizontal-gap:0;
+}
+.hbox{
+	horizontal-gap:0;
+	
+}
+
+.textArea{
+	font-size:13;
+	
+	background-color:#fff4f4;
+	border-style:solid;
+	border-alpha:0.5;
+	border-color:#000000;
+	padding-bottom:0;
+	padding-top:0;
+	
+}
+.textAreaBrowse{
+	font-size:13;
+	
+	border-style:none;
+	border-alpha:0.5;
+	border-color:#ffffff;
+	padding-bottom:0;
+	padding-top:0;
+	
+}
+TitleWindow{
+	icon:Embed(source="assets/tianshi1.gif");
+	background-alpha:1;
+	
+}
+.titleWindow{
+	icon:Embed(source="assets/tianshi1.gif");
+	background-alpha:1;
+	
+}
+.imgsel{
+	background-color:#ff4444;	
+	border-color:#000000;
+	
+}

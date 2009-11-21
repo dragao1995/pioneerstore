@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow styleName="win" title="选择地域" xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="200" height="300">
+	<mx:Style source="style/popWin.css"/>
+
+	<mx:Script>
+		<![CDATA[
+			///////////////测试使用////////////////
+			import mx.managers.PopUpManager;
+			import flash.net.LocalConnection;
+			import mx.controls.Alert;
+			import mx.controls.Text;
+			import event.good.ZoneEvent;
+			
+			public var zone:Object=null;
+			
+			private function closeWin(){
+				
+				PopUpManager.removePopUp(this);
+				
+			}
+			
+			private function selConfirm():void{
+				if(null==zone || ""==zone){
+					Alert.show("没有选择内容！");
+					return;
+				}
+				
+			}
+		]]>
+	</mx:Script>
+		<mx:VBox top="5" height="100%" width="100%"  horizontalAlign="center">
+			<mx:Box  width="90%" height="95%" horizontalAlign="center">
+				
+			</mx:Box>
+			<mx:HBox width="100%" height="5%" horizontalAlign="center">
+				<mx:Button styleName="okbtn" label="确定" click="selConfirm()"/>
+				<mx:Button styleName="delbtn" label="取消" click="closeWin();"/>
+			</mx:HBox>	
+		</mx:VBox>
+</mx:TitleWindow>

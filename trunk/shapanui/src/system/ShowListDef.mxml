@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="40%" height="100%" xmlns:list="view.list.*">
+	<mx:Script>
+		<![CDATA[
+			import event.list.ListClickEnent;
+			import com.ResultFilter;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.http.mxml.HTTPService;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import view.selWin.ObjSelWindow;
+			import view.list.ListView;
+			public var tblName=null;
+			private var listview:ListView=null;
+			private var newObj:Object=null;
+			public var ldxml:XML=null;
+			private var selObj:Object=null;
+			public function setCondition(condition:String):void{
+				if(null==ldxml){
+					getTmpl();
+				}
+				if(null==listview){
+					listview=new ListView();
+					listview.addEventListener(ListClickEnent.rowClick,setSelObj,false,0,false);
+					listview.percentHeight=100;
+					lsp.addChild(listview);
+				}
+				
+				listview.tbName="列表定义";
+				listview.setCondition(condition);
+				
+			}
+			
+			private function setSelObj(e:ListClickEnent):void{
+				//Alert.show(e.obj["ID"]);
+				this.selObj=e.obj;
+				
+			}
+			private function getTmpl():void{
+				var xml:XML=<DATAPACKET/>;
+				xml.@ACTION="detail";
+				xml.@TABLE="列表定义";
+				//xml.@ID=this.keyVal;
+				
+				var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getCDSActionUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				dataService.send(xml);
+			}
+			protected function onXMLResult(e:ResultEvent):void{
+				
+				var tmpdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(tmpdoc))return;
+				//如果没有记录，加一条空记录，用于显示
+				//Alert.show(tmpdoc.toXMLString());
+				this.ldxml=tmpdoc;
+			}
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("连接服务器错误！");
+			}
+			private function openwin():void{
+				var selWin:ColSelWindow =ColSelWindow(PopUpManager.createPopUp(this, ColSelWindow, false));
+				selWin.title=this.tblName;
+				selWin.setParentBox(this);
+				selWin.setMeta(this.tblName);
+				var point2:Point = new Point();
+				point2=addbtn.localToGlobal(point2);
+				selWin.x=point2.x+15;
+                selWin.y=point2.y+5;
+			}
+			public function addObj(obj:Object):void{
+				//Alert.show(obj["NAME"]);
+				//如果存在，什么不操作，如果不存在，加入数据库，同时展现出来。
+				//Alert.show("boolean="+groupList.existByKey(obj["ID"]));
+				
+				this.newObj=obj;
+				if(null!=obj){
+					if(!listview.existByKey(obj["ID"])){
+						var xml:XML=this.ldxml.copy();
+						var rows:XMLList=xml.TABLEDATA.ROWDATA.ROW;
+						var tables:XMLList=xml.TABLEDATA;
+						
+						if(tables.length()<1){
+							var node:XML=<TABLEDATA>
+											<ROWDATA>
+												<ROW/>
+											</ROWDATA>
+										 </TABLEDATA>;
+										 xml.appendChild(node);
+						}
+						
+						if(rows.length()<1){
+							var rowsElt:XML=xml.TABLEDATA.ROWDATA[0];
+							rowsElt.appendChild(<ROW/>);
+							
+						}
+						
+						xml.@ACTION="add";
+						xml.@TABLE="列表定义";
+						var tblElt:XML=xml.METADATA.TABLE[0];
+						tblElt.@NAME="列表定义";
+						var rowElt:XML=xml.TABLEDATA.ROWDATA.ROW[0];
+						rowElt.@TABLE_NAME=this.tblName;
+						rowElt.@COLS=obj["NAME"];
+						rowElt.@REMARK=obj["REMARK"];
+						var dataService:HTTPService = new HTTPService();
+						dataService.url = UrlService.getCDSActionUrl();
+						dataService.contentType="application/xml";     
+						dataService.method="POST";
+						dataService.resultFormat = "e4x";
+						dataService.showBusyCursor=true;
+						dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+						dataService.addEventListener(ResultEvent.RESULT, onAddDataResult);
+						dataService.send(xml);
+						//Alert.show(xml.toXMLString());
+						//groupList.addObj(obj);
+					}else{
+						Alert.show("添加的成员已经存在！");
+					}	
+				}
+				
+			}
+			private function onAddDataResult(e:ResultEvent):void{
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				var id:String=data.@ID;
+				this.newObj["ID"]=id;
+				listview.addObj(this.newObj);
+				this.newObj=null;
+			}
+			
+			private function delAction():void{
+				if(null==this.selObj){
+					Alert.show("请选择要删除的项！");
+					return;
+				}
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="del";
+				doc.@ID=this.selObj["ID"];
+				doc.@TABLE="列表定义";
+				doc.@["KEYNAME"]="ID";
+				var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getCDSActionUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onDelDataResult);
+				dataService.send(doc);
+			}
+			private function onDelDataResult(e:ResultEvent):void{
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				listview.delRow(this.selObj["ID"]);
+				this.selObj=null;
+			}
+		]]>
+	</mx:Script>
+	<mx:HBox>
+		<mx:Button label="添加" id="addbtn" click="openwin();"/>
+		<mx:Button label="删除" click="delAction();"/>
+	</mx:HBox>
+	<mx:Box id="lsp" width="100%" height="100%">
+		
+	</mx:Box>
+	
+	
+</mx:Box>

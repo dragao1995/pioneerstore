@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+	showCloseButton="true"
+	close="PopUpManager.removePopUp(this);"
+	creationComplete="init();"
+	styleName="label"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import view.selWin.ObjWindow;
+			import com.google.maps.overlays.Marker;
+			import com.google.maps.overlays.MarkerOptions;
+			import com.AppShareObj;
+			import view.selWin.ObjectAddWindow;
+			import event.list.ListClickEnent;
+			import shapan.marker.ImageList;
+			import mx.core.Application;
+			import view.object.ObjectAddView;
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.http.mxml.HTTPService;
+			import mx.managers.PopUpManager;
+			
+			import com.google.maps.LatLng;
+			import com.google.maps.Map;
+			private var map:Map=null;
+			private var e:ContextMenuEvent=null;
+			private var XD:Number=-1;
+			private var YD:Number=-1;
+			public function setMate(map:Map,e:ContextMenuEvent):void{
+				try{
+					this.e=e;
+					this.map=map;
+					var latlng:LatLng = map.fromViewportToLatLng(new Point(e.mouseTarget.mouseX, e.mouseTarget.mouseY));
+					XD=latlng.lat();
+					YD=latlng.lng();
+					
+				}catch(ee:Error){
+					XD=e.mouseTarget.mouseX;
+					YD=e.mouseTarget.mouseY;
+				}
+				
+			}
+			
+			
+			private function init():void{
+				if(null==images){
+						
+				images=new ImageList();
+				images.addEventListener(ListClickEnent.rowClick,setMark);
+				images.percentHeight=100;
+				}
+				contentp.addChild(images);
+				
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="list";
+				doc.@TABLE="表注册";
+				doc.@CONDITION="physical=1 and appcode='ctl' and CODE !='ctl_my_market'";
+				
+				var tmplService:HTTPService = new HTTPService();
+				tmplService.url = UrlService.getDetailUrl();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				tmplService.send(doc);
+			}
+			
+			 private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("Unable to load datasource:"+e.message);
+			} 
+			protected function onXMLResult(e:ResultEvent):void{
+				try{
+					var tmpdoc:XML=XML(e.result);
+					
+					var rows:XMLList=tmpdoc.TABLEDATA.ROWDATA.ROW;
+					for each(var row:XML in rows){
+						
+						var radio:RadioButton =new RadioButton();
+						radio.id=row.@CODE;
+						radio.label=row.@NAME;
+						radio.groupName="survey";
+						radio.addEventListener(MouseEvent.CLICK, selType);
+						radio.styleName="label";
+						selecttypep.addChild(radio);
+						
+					}
+				}catch(e:Error){
+					
+				}
+			}
+			
+			private function buildTypes(doc:XML):void{
+				
+			}
+			private var marketType:String=null;
+			private var images:ImageList=null;
+			private function selType(e:MouseEvent):void{
+				var obj:RadioButton=RadioButton(e.target);
+				if("临时标记"==obj.label || "永久标记"==obj.label){
+					marketType=obj.label;
+					contentp.removeAllChildren();
+					if(null==images){
+						
+					images=new ImageList();
+					images.addEventListener(ListClickEnent.rowClick,setMark);
+					images.percentHeight=100;
+					}
+					contentp.addChild(images);
+				}else{
+					var dvalue:Array=new Array();
+				
+					var objx:Object=new Object();
+					objx.NAME="X";
+					objx.VALUE=this.XD;
+					     
+					dvalue.push(objx);
+					var objy:Object=new Object();
+					objy.NAME="Y";
+					objy.VALUE=this.YD;
+					dvalue.push(objy);
+					
+					//加入个人信息。
+					var doc:XML=AppShareObj.getUserDoc();
+					var uName:Object=new Object();
+					uName.NAME="CREATE_NAME";
+					uName.VALUE=doc.@NAME;
+					dvalue.push(uName);
+					
+					var add:ObjectAddView=new ObjectAddView();
+					add.setMap(this.map);
+					add.setDefaultValues(dvalue);
+					add.setCondition(obj.label,null);
+					contentp.removeAllChildren();
+					contentp.addChild(add);
+					//把地图对象引入调试。
+				}
+			}
+			
+			private function setMark(e:ListClickEnent):void{
+				var obj:Object=e.obj;
+				var doc:XML=XML(obj);
+				//Alert.show(doc.toXMLString());
+				var imgfile:String=doc.@IMGFILE;
+				var dvalue:Array=new Array();
+				
+					var objx:Object=new Object();
+					objx.NAME="X";
+					objx.VALUE=this.XD;
+					     
+					dvalue.push(objx);
+					var objy:Object=new Object();
+					objy.NAME="Y";
+					objy.VALUE=this.YD;
+					dvalue.push(objy);
+					//IMGFILE
+					var img:Object=new Object();
+					img.NAME="ICON";
+					img.VALUE=imgfile;
+					dvalue.push(img);
+					//加入个人信息。
+					var doc:XML=AppShareObj.getUserDoc();
+					
+					var uName:Object=new Object();
+					uName.NAME="CREATE_NAME";
+					uName.VALUE=doc.@NAME;
+					dvalue.push(uName);
+				if("永久标记"==marketType){
+					//保存到标记收藏表中
+					var selWin:ObjectAddWindow =ObjectAddWindow(PopUpManager.createPopUp(this, ObjectAddWindow, true));
+					selWin.setMap(this.map);
+					selWin.setComp("ctl_biaoji");
+					
+					
+					selWin.setDefaultValues(dvalue);
+					
+					selWin.setCondition("我的标记",null);
+					
+					selWin.showCloseButton=true;
+					selWin.minHeight=300;
+					selWin.minWidth=300;
+					selWin.maxHeight=Application.application.screen.height-100;
+					selWin.maxWidth=Application.application.screen.width*2/3;
+					selWin.x=(Application.application.screen.width-selWin.width)/2;
+	                selWin.y=(Application.application.screen.height-selWin.height)/2;
+	                
+	                var markerOptions:MarkerOptions = new MarkerOptions(); 
+					var iconPath=UrlService.getServiceUrl()+"upload/ctl_biaoji/"+imgfile;
+					var request:URLRequest = new URLRequest(iconPath); 
+					var imageLoader:Loader = new Loader(); 
+					imageLoader.load(request)
+					markerOptions.icon = imageLoader;
+			        markerOptions.tooltip =doc.@NAME; 
+			        markerOptions.iconAlignment = MarkerOptions.ALIGN_VERTICAL_CENTER+MarkerOptions.ALIGN_HORIZONTAL_CENTER; 
+					var marker:Marker = new Marker(new LatLng(this.XD,this.YD), markerOptions);
+					/**
+					marker.addEventListener(MapMouseEvent.CLICK, function(e:Event):void {
+	          			//var win:GoodMGComp=new GoodMGComp();
+	          			var selWin:ObjWindow =new ObjWindow();
+	          			var hiddenls:Array=new Array();
+						hiddenls.push("X");
+						hiddenls.push("Y");
+						//hiddenls.push("IMGFILE");
+						selWin.setHiddenLs(hiddenls);
+						selWin.setCondition(physicalName,"ID=1");
+						
+			          	var options2:InfoWindowOptions = new InfoWindowOptions({
+			                customContent: selWin,
+			                customOffset: new Point(0, 10),
+			                width: 300,
+			                height: 160,
+			                drawDefaultFrame: true
+			            });
+			                marker.openInfoWindow(options2); 
+			                
+		            }); 
+					 * **/
+					
+					
+		            
+					this.map.addOverlay(marker); 
+				}else{
+					var markerOptions:MarkerOptions = new MarkerOptions(); 
+					var iconPath=UrlService.getServiceUrl()+"upload/ctl_biaoji/"+imgfile;
+					var request:URLRequest = new URLRequest(iconPath); 
+					var imageLoader:Loader = new Loader(); 
+					imageLoader.load(request)
+					markerOptions.icon = imageLoader;
+			        markerOptions.tooltip =doc.@NAME; 
+			        //markerOptions.iconAlignment = MarkerOptions.ALIGN_HORIZONTAL_CENTER;
+			        markerOptions.iconAlignment = MarkerOptions.ALIGN_VERTICAL_CENTER+MarkerOptions.ALIGN_HORIZONTAL_CENTER; 
+			        
+			        //markerOptions.iconOffset = new Point(this.XD, this.YD); 
+					var marker:Marker = new Marker(new LatLng(this.XD,this.YD), markerOptions);
+					this.map.addOverlay(marker); 
+				}
+				
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<mx:HBox minWidth="450">
+		<mx:Panel width="20%" title="标记类型">
+			<mx:VBox id="selecttypep" minHeight="300" >
+				
+				<mx:RadioButton groupName="survey" selected="true" id="type1" label="临时标记" click="selType(event)" styleName="label" color="0x323232"/> 
+	            <mx:RadioButton groupName="survey" id="type2" label="永久标记" click="selType(event)" styleName="label" color="0x323232"/>
+	           
+			</mx:VBox>
+		</mx:Panel>
+		<mx:Box width="80%" id="contentp" height="100%">
+			
+		</mx:Box>
+	</mx:HBox>
+</mx:TitleWindow>

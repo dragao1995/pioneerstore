@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"
+	creationComplete="init();"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import view.list.ListObjMG;
+			import mx.controls.Alert;
+			
+			
+			var listObj:ListObjMG=null;
+			
+			private var selType:String="条形码";
+			
+			private function init():void{
+				selText.setFocus();
+				if(null==listObj){
+					listObj=new ListObjMG();
+					showp.addChild(listObj);
+				}
+			}
+			public function setTextFocus():void{
+				selText.setFocus();
+			}
+			private function setType(type:String):void{
+				this.selType=type;
+				selText.setFocus();
+			}
+			
+			private function searchFun():void{
+				if("条形码"==this.selType){
+	    			this.listObj.setMeta("商品","good", "CODE  ='"+selText.text +"'");
+	    			selText.text='';
+	    		}
+				if("名称"==this.selType){
+					this.listObj.setMeta("商品","good", "NAME  LIKE'%"+selText.text +"%'");
+				}
+				
+				selText.setFocus();
+			}
+			 private function myKeyUp(evt:KeyboardEvent):void{
+		     var text:String= 'evt.charCode='+evt.charCode + 'evt.keyCode='+ evt.keyCode + 'evt.keyLocation='+ evt.keyLocation + "按下\n";
+		    	if(evt.keyCode==13){
+		    		searchFun();
+		    	}
+		    }
+			
+		]]>
+	</mx:Script>
+	<mx:HBox width="100%" height="5%">
+		<mx:ApplicationControlBar width="100%" height="39" barColor="#e0" alpha="1.9">
+			<mx:RadioButton styleName="label" groupName="seltype" id="codeId" label="条形码" click="setType(codeId.label);" selected="true"/>
+			<mx:RadioButton styleName="label" groupName="seltype" id="nameId" label="名称"  click="setType(nameId.label);"/>
+			<mx:TextInput styleName="textInput" id="selText" keyUp="myKeyUp(event)"/>
+			<mx:Button label="检索" styleName="btn" click="searchFun();"/>
+		</mx:ApplicationControlBar>
+	</mx:HBox>
+	<mx:Box id="showp" width="100%" height="95%">
+			
+	</mx:Box>
+	
+</mx:Box>

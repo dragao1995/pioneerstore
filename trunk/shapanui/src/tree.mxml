@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+	creationComplete="init();"
+	 layout="absolute" xmlns:component="component.*"
+	 xmlns:object="view.tree.*">
+	<mx:Script>
+		<![CDATA[
+		
+		private function init():void{
+			treemg.setMeta("地域","area");
+		}
+		/**
+			import mx.controls.Alert;
+			import event.tree.TreeEvent;
+			private function init():void{
+				treecomp.setTblName("地域");
+				detailp.setListView(treecomp);
+			}
+			private function areaSelected(ee:TreeEvent){
+				var node:Object=ee.treeNode;
+				//Alert.show("node.name="+node.name);
+				
+				detailp.setMeta(node,"地域");
+				detailp.setComp("area");
+			}
+			**/
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" height="90%">
+		<!--
+		<mx:Box width="30%" height="100%">
+			<component:TreeComp height="100%" treeSelect="areaSelected(event);" id="treecomp"/>
+		</mx:Box>
+		
+		<mx:Box width="70%" height="100%">
+			<object:TreeView id="detailp"/>
+		</mx:Box>
+		-->
+		<object:TreeObjectMG id="treemg"/>
+			
+		
+	</mx:HBox>
+</mx:Application>

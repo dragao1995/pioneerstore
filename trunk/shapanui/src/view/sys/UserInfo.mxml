@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="400" height="300"
+	creationComplete="init();"
+	close="PopUpManager.removePopUp(this);"
+	showCloseButton="true"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+			import com.ResultFilter;
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.http.mxml.HTTPService;
+			import com.AppShareObj;
+			private var doc:XML=null;
+			private function init():void{
+				var udoc:XML=AppShareObj.getUserDoc();
+				
+				if(null!=udoc){
+					var uid:String=udoc.@ID;
+					var qdoc:XML=<DATAPACKET ACTION="detail"/>;
+					qdoc.@TABLE="用户";
+					qdoc.@ID=uid;
+					var tmplService:HTTPService = new HTTPService();
+					//tmplService.url = "mode/data/detaildoc.xml";
+					tmplService.url = UrlService.getDetailUrl();
+					tmplService.contentType="application/xml";     
+					tmplService.method="POST";
+					tmplService.resultFormat = "e4x";
+					tmplService.showBusyCursor=true;
+					tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+					tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+					tmplService.send(qdoc);
+				}
+			}
+			
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("连接服务器错误！");
+			}
+			
+			protected function onXMLResult(e:ResultEvent):void{
+				
+				var tmpdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(tmpdoc))return;
+				this.doc=tmpdoc;
+				var row:XML=tmpdoc.TABLEDATA.ROWDATA.ROW[0];
+				if(null!=row){
+					cname.text=row.@NAME;
+					mobile.text=row.@MOBILE;
+					address.text=row.@ADDRESS;
+				}
+			}
+			
+			private function editfun():void{
+				var tdoc:XML=this.doc.copy();
+				var row:XML=tdoc.TABLEDATA.ROWDATA.ROW[0];
+				if(null!=row){
+					row.@NAME=cname.text;
+					row.@MOBILE=mobile.text
+					row.@ADDRESS=address.text
+					if(pwd.text==pwd2.text && null!=pwd.text && pwd.text.length>5){
+						row.@PASSWORD=pwd.text;
+					}else if(null!=pwd.text && ""!=pwd.text){
+						Alert.show("新密码出错！");
+						return;
+					}
+				}
+				tdoc.@ACTION="edit";
+				tdoc.@TABLE="用户";
+				var tmplService:HTTPService = new HTTPService();
+					//tmplService.url = "mode/data/detaildoc.xml";
+					tmplService.url = UrlService.getDetailUrl();
+					tmplService.contentType="application/xml";     
+					tmplService.method="POST";
+					tmplService.resultFormat = "e4x";
+					tmplService.showBusyCursor=true;
+					tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+					tmplService.addEventListener(ResultEvent.RESULT, onEditResult);
+					tmplService.send(tdoc);
+			}
+			
+			protected function onEditResult(e:ResultEvent):void{
+				
+				var tmpdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(tmpdoc))return;
+				Alert.show("修改成功！");
+			}
+		]]>
+	</mx:Script>
+	<mx:Box width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<mx:Box width="60%" height="60%" horizontalAlign="center">
+		<mx:HBox height="20" width="100%" horizontalAlign="center" verticalAlign="bottom">
+			
+		</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="名称: " width="70" styleName="label"/><mx:TextInput id="cname" styleName="textInput"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="密码：" width="70" styleName="label"/>
+				<mx:TextInput id="pwd" styleName="textInput" displayAsPassword="true"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="确认密码：" width="70" styleName="label"/>
+				<mx:TextInput id="pwd2" styleName="textInput" displayAsPassword="true"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="电话：" width="70" styleName="label"/>
+				<mx:TextInput id="mobile" styleName="textInput"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="地址：" width="70" styleName="label"/>
+				
+				<mx:TextArea id="address" styleName="textInput" />
+			</mx:HBox>
+			<mx:HBox height="50" width="100%" horizontalAlign="center" verticalAlign="bottom">
+				
+				<mx:Button label="确定" click="editfun();" styleName="okbtn"/>
+				<mx:Button label="退出" click="PopUpManager.removePopUp(this);" styleName="delbtn" />
+			</mx:HBox>
+		</mx:Box>
+		
+	</mx:Box>
+</mx:TitleWindow>

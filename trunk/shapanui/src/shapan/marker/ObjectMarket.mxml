@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" xmlns:list="view.list.*"
+	creationComplete="init();"
+	xmlns:object="view.object.*">
+	<mx:Script>
+		<![CDATA[
+		//---------------------定义对象的图标-------------------
+			import view.object.ObjectMarketView;
+			import view.object.SingleObjectView;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.http.mxml.HTTPService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.controls.Alert;
+			import event.list.ListClickEnent;
+			private function init():void{
+				objlist.tbName="表注册";
+				objlist.setCondition(" type='基础数据' and appCode='ctl' and  physical=1  and kpi=1");
+				objlist.addEventListener(ListClickEnent.rowClick,showDetail,false,0,false);
+				
+			}
+			private function showDetail(e:ListClickEnent):void{
+				if(null!=e.obj){
+					var doc:XML=<DATAPACKET/>;
+					doc.@ACTION="list";
+					doc.@TABLE="记录图标";
+					doc.@CONDITION="OBJECT='"+e.obj.NAME+"'";
+					var typeTreeData:HTTPService = new HTTPService();
+					typeTreeData.url=UrlService.getCDSActionUrl();
+	                typeTreeData.contentType="application/xml";   
+	                typeTreeData.resultFormat="e4x";
+	                typeTreeData.method = "POST";
+	                typeTreeData.showBusyCursor=true;
+	                typeTreeData.addEventListener("result", buildRowICON);
+	                typeTreeData.addEventListener("fault", httpFault);
+	                typeTreeData.send(doc);
+				}
+			}
+			private function httpFault(event:FaultEvent):void {
+                Alert.show("网络连接错误，请重试！");
+            }
+			 private function buildRowICON(event:ResultEvent):void {
+                var xml:XML = (XML)(event.result);
+                var rows:XMLList=xml.TABLEDATA.ROWDATA.ROW;
+                iconmgp.removeAllChildren();
+                for each(var row:XML in rows){
+                	var objbrowse:ObjectMarketView=new ObjectMarketView();
+                	var id:String=row.@ID;
+                	objbrowse.setTitle("记录图标信息");
+					objbrowse.setComp(null);
+					objbrowse.setShowClass(null);
+					objbrowse.setMenuBarVisible(true);
+					objbrowse.setAddfun(false);
+					objbrowse.setDelfun(false);
+					objbrowse.setMeta(id,"记录图标");
+					iconmgp.addChild(objbrowse);
+                }
+  			  }
+		]]>
+	</mx:Script>
+	<mx:HBox width="100%" height="100%">
+		<mx:Box width="20%" height="100%">
+			<list:ListView id="objlist" width="20%" height="100%"/>
+		</mx:Box>
+		<mx:VRule height="100%" width="70"/>
+			
+		<mx:Box width="80%" height="100%">
+			<mx:Box id="iconmgp">
+				
+			</mx:Box>
+		</mx:Box>
+	</mx:HBox>
+</mx:Panel>

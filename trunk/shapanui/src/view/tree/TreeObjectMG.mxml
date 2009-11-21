@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel layout="horizontal" xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"
+	
+	 xmlns:component="component.*"
+	 xmlns:object="view.tree.*"
+	>
+<mx:Script>
+	<![CDATA[
+		import component.TreeComp;
+		import event.tree.TreeEvent;
+		private var tblName:String=null;
+		private var compName:String=null;
+		private var treeV:TreeView=null;
+		public function setMeta(tblName:String,compName:String):void{
+			this.tblName=tblName;
+			this.compName=compName;
+			init();
+		}
+		private function init():void{
+//				地域树的初始化
+				var treecomp:TreeComp=new TreeComp();
+				treecomp.percentWidth=30;
+				treecomp.setTblName(tblName);
+				treecomp.addEventListener(TreeEvent.TREE_SELECTED,areaSelected);
+				this.addChild(treecomp);
+				treeV=new TreeView();
+				treeV.percentWidth=70;
+				treeV.setListView(treecomp);
+				this.addChild(treeV);
+				treeV.setMeta(null,this.tblName);
+				
+			}
+			private function areaSelected(ee:TreeEvent){
+				var node:Object=ee.treeNode;
+				//Alert.show("node.name="+node.name);
+				
+				treeV.setMeta(node,tblName);
+				treeV.setComp(compName);
+			}
+	]]>
+</mx:Script>
+	
+</mx:Panel>

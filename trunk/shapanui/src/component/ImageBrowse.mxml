@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml"
+	mouseOut="outfun();"
+	mouseOver="overfun();"
+	horizontalAlign="center"
+	verticalAlign="middle"
+	verticalGap="0"
+	horizontalGap="0"
+	paddingLeft="0"
+	paddingRight="0"
+	creationComplete="init();"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Style>
+		.lablestyle{
+			font-size:12;	
+		}
+	</mx:Style>
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Label;
+			import mx.controls.Image;
+			import mx.controls.Alert;
+			import com.pioneer.http.UrlService;
+			private var comp:String=null;
+			private var imageName:String=null;
+			private var filePath=null;
+			private var labelstr:String=null;
+			
+			
+			public var row:Object=null;
+			
+			private function init():void{
+				initImg();
+			}
+			private function overfun():void{
+				this.styleName="imgsel";
+			}
+			
+			private function outfun():void{
+				this.styleName="";
+			}
+			public function setComp(comp:String):void{
+				this.comp=comp;
+			}
+			public function setLabel(label:String):void{
+				this.labelstr=label;
+			}
+			public function setName(name:String):void{
+				this.imageName=name;
+				//initImg();
+			}
+			private function initImg():void{
+				if(null!=this.comp){
+					this.removeAllChildren();
+					this.filePath=UrlService.getFileBasePath()+this.comp+"/"+imageName;
+					
+					//Alert.show(filePath);
+					
+					
+					if(null!=this.labelstr){
+						var img:Image=new Image();
+						img.source=filePath;
+						img.percentHeight=100;
+						img.percentWidth=100;
+						img.document=this.row;
+						img.toolTip=this.labelstr;
+						this.document=this.row;
+						this.addChild(img);
+						/**
+						var lab:Label=new Label();
+						lab.text=this.labelstr;
+						lab.styleName="lablestyle";
+						lab.height=19;
+						lab.percentWidth=100;
+						this.addChild(lab);
+						 * **/
+					}else{
+						var img:Image=new Image();
+						img.source=filePath;
+						img.percentHeight=100;
+						img.percentWidth=100;
+						img.document=this.row;
+						this.document=this.row;
+						this.addChild(img);
+					}
+					
+					
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	
+</mx:Box>

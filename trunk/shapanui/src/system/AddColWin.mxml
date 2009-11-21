@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="500"
+	styleName="label"
+	
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+		
+			private var parentObj:Object=null;
+			
+			public function setParentBox(parentObj:Object):void{
+				this.parentObj=parentObj;
+			}
+			
+			
+			private function dataTypeChange():void{
+			var newObj:Object=typecomb.selectedItem;
+			var newType:String=newObj["code"];
+			if("varchar"==newType){
+				this.size.text="30";
+			}else if("password"==newType){
+				this.size.text="30";
+			}else if("password"==newType){
+				this.size.text="30";
+			}else if("int"==newType){
+				this.size.text="10";
+			}else if("float"==newType){
+				this.size.text="13";
+			}else if("date"==newType){
+				this.size.text="10";
+			}else if("image"==newType){
+				this.size.text="100";
+			}else if("file"==newType){
+				this.size.text="100";
+			}
+		}
+		
+		private function addCol():void{
+				var name:String=colName.text;
+				if(null==name || ""==name){
+					Alert.show("列名称不能为空！");
+					return ;
+				}
+				var code:String=colCode.text;
+				if(null==code || ""==code){
+					Alert.show("列名称不能为空！");
+					return ;
+				}
+				
+				var size:String=size.text;
+				var intSize:Number=Number(size);
+				if(isNaN(intSize)){
+					Alert.show("类型长度必须是整数！");
+				}
+				var newObj:Object=typecomb.selectedItem;
+				var newType:String=newObj["code"];
+				
+				if(null!=this.parentObj){
+					try{
+						this.parentObj.addCol(code,name,newType,size);
+						colName.text="";
+						colCode.text="";
+					}catch(e:Error){
+						Alert.show(e.getStackTrace());
+					}
+					
+				}else{
+					Alert.show("this.parentObj is null");
+				}
+			}
+			
+			private function createTimeCol():void{
+				this.parentObj.addCol("CREATE_TIME","创建时间","varchar","20");
+			}
+			private function updateTimeCol():void{
+				this.parentObj.addCol("UPDATE_TIME","更新时间","varchar","20");
+			}
+			
+			private function createUser():void{
+				this.parentObj.addCol("CREATE_ID","创建人编号","int","11");
+				this.parentObj.addCol("CREATE_NAME","创建人姓名","varchar","30");
+			}
+			
+			private function createIcon():void{
+				this.parentObj.addCol("ICON","使用图标","varchar","60");
+			}
+			private function createArea():void{
+				this.parentObj.addCol("AREA","所在地区","int","10");
+			}
+			private function createCompany():void{
+				this.parentObj.addCol("COMPANY","所属集团","int","10");
+			}
+			private function createObjImg():void{
+				this.parentObj.addCol("OBJIMG","现场图片","image","100");
+			}
+			private function createDataMonth():void{
+				this.parentObj.addCol("DATAMONTH","数据产生月份","int","6");
+			}
+		]]>
+	</mx:Script>
+	<mx:Array id="arr">
+        <mx:Object label="字符" code="varchar"/>
+        <mx:Object label="密码字符" code="password"/>
+        <mx:Object label="整型" code="int"/>
+        <mx:Object label="浮点型" code="float"/>
+		<mx:Object label="日期" code="date"/>
+		<mx:Object label="图片" code="image"/>
+		<mx:Object label="文件" code="file"/>
+    </mx:Array>
+    	<mx:Panel title="常用字段" width="100%" horizontalGap="0" verticalGap="0">
+				
+				<mx:HBox>
+					<mx:Button label="创建人" click="createUser();"/>
+					<mx:Button label="创建时间" click="createTimeCol();"/>
+					<mx:Button label="更新时间" click="updateTimeCol();"/>
+					
+				</mx:HBox>
+		</mx:Panel>
+		<mx:Panel title="沙盘字段" width="100%" horizontalGap="0" verticalGap="0">
+			<mx:HBox>
+				<mx:Button label="数据产生月份" click="createDataMonth();"/>
+				
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Button label="图标" click="createIcon();"/>
+				<mx:Button label="现场图片" click="createObjImg();"/>
+				<mx:Button label="所在地区" click="createArea();"/>
+				<mx:Button label="所属集团" click="createCompany();"/>
+			</mx:HBox>
+		</mx:Panel>
+		<mx:Panel headerHeight="15" paddingLeft="20" paddingRight="20" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+			
+			<mx:HBox width="100%" height="100%">
+				<mx:Label text="列名称：" width="60"/><mx:TextInput id="colName" />
+			</mx:HBox>
+			<mx:HBox width="100%" height="100%">
+				<mx:Label text="列编码：" width="60"/><mx:TextInput id="colCode"/>
+			</mx:HBox>
+			<mx:HBox width="100%" height="100%"> 
+				<mx:Label text="类型" width="60"/>
+				<mx:ComboBox id="typecomb" dataProvider="{arr}" change="dataTypeChange();"/>
+			</mx:HBox>
+			<mx:HBox width="100%" height="100%">
+				<mx:Label text="长度" width="60"/><mx:TextInput id="size"/>
+			</mx:HBox>
+			
+			<mx:HBox width="100%" height="100%" horizontalAlign="center">
+				<mx:Button label="添加" click="addCol();"/>
+				<mx:Button label="关闭" click="PopUpManager.removePopUp(this);"/>
+			</mx:HBox>
+		</mx:Panel>
+
+</mx:TitleWindow>

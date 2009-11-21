@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<!-- Simple example to demonstrate the Alert control. -->
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:component="component.*"
+	creationComplete="init();"
+	>
+<mx:Style source="style/main.css"/>
+    <mx:Script>
+        <![CDATA[
+        	import component.ImageBrowse;
+            import mx.controls.Alert;
+            import mx.events.CloseEvent;
+        
+            // Event handler function uses a static method to show
+            // a pop-up window with the title, message, and requested buttons.        
+            private function clickHandler(event:Event):void {
+                Alert.show("Do you want to save your changes?", "Save Changes", 3, this, alertClickHandler);
+            }
+        
+            // Event handler function for displaying the selected Alert button.
+            private function alertClickHandler(event:CloseEvent):void {
+                if (event.detail==Alert.YES)
+                    status.text="You answered Yes";
+                else
+                    status.text="You answered No";
+            }
+
+            // Event handler function changes the default Button labels and sets the
+            // Button widths. If you later use an Alert with the default Buttons, 
+            // you must reset these values.
+            private function secondClickHandler(event:Event):void {
+                Alert.buttonWidth = 100;
+                Alert.yesLabel = "Magenta";
+                Alert.noLabel = "Blue";
+                Alert.cancelLabel = "Green";
+
+                Alert.show("Select a color:","Color Selection",1|2|8,this);
+                
+                // Set the labels back to normal:
+                Alert.yesLabel = "Yes";
+                Alert.noLabel = "No";                
+            }
+            
+            private function init():void{
+            	var img:ImageBrowse=new ImageBrowse();
+            	img.setComp("ctl_biaoji");
+            	img.setLabel("凤蝶");
+            	img.setName("1253687312359WB01219_.GIF");
+            	
+            	titlep.addChild(img);
+            	
+            	var img1:ImageBrowse=new ImageBrowse();
+            	img1.setComp("ctl_biaoji");
+            	img1.setLabel("小鸟");
+            	img1.setName("1253687280984WB01301_.GIF");
+            	titlep.addChild(img1);
+            	var img2:ImageBrowse=new ImageBrowse();
+            	img2.setComp("ctl_biaoji");
+            	img2.setLabel("飞机");
+            	img2.setName("1253687229031vidsamp.gif");
+            	titlep.addChild(img2);
+            }
+        ]]>
+    </mx:Script>
+    <mx:Array id="arr">
+	        <mx:Object label="销售量"  icon="http://127.0.0.1/store/upload/ctl_biaoji/1253687312359WB01219_.GIF" />
+	        <mx:Object label="盈利"   icon="http://127.0.0.1/store/upload/ctl_biaoji/1253687280984WB01301_.GIF"/>
+	        <mx:Object label="价格"   icon="http://127.0.0.1/store/upload/ctl_biaoji/1253687229031vidsamp.gif"/>
+	    </mx:Array>
+    <mx:Tile id="titlep" direction="horizontal" borderStyle="inset" horizontalGap="10" verticalGap="15" 
+             color="0x323232" paddingTop="10" paddingBottom="10" paddingLeft="10" paddingRight="10">
+
+            <mx:Button label="1" height="50" width="75" />
+            <mx:Button label="2" height="50" width="75" />
+            <mx:Button label="3" height="50" width="75" />
+            
+            <mx:Image mouseOver="this.styleName='imgsel'" mouseOut="this.styleName=''" source="http://127.0.0.1/store/upload/ctl_biaoji/1253687312359WB01219_.GIF"/>
+        </mx:Tile>
+
+    <mx:Panel title="Alert Control Example" width="75%" horizontalAlign="center" paddingTop="10">
+      <mx:Text width="100%" color="blue" textAlign="center"
+          text="Click the button below to display a simple Alert window."/>
+      <mx:Button label="Click Me" click="Alert.show('Hello World!', 'Message');"/>
+
+      <mx:Text width="100%" color="blue" textAlign="center"
+          text="Click the button below to display an Alert window and capture the button pressed by the user."/>
+      <mx:Button label="Click Me" click="clickHandler(event);"/>
+      <mx:Label id="status" fontWeight="bold"/>
+
+      <mx:Text width="100%" color="blue" textAlign="center"
+          text="Click the button below to display an Alert window that uses custom Button labels."/>
+      <mx:Button label="Click Me" click="secondClickHandler(event);"/>
+    </mx:Panel>
+
+</mx:Application>

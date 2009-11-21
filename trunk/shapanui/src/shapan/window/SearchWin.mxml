@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="240"
+	styleName="label"
+	showCloseButton="true"
+	close="PopUpManager.removePopUp(this);"
+	creationComplete="init();"
+	cornerRadius="15"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.events.ListEvent;
+			import com.google.maps.MapMouseEvent;
+			import com.google.maps.InfoWindowOptions;
+			import com.google.maps.Map;
+			import com.google.maps.LatLng;
+			import com.google.maps.overlays.Marker;
+			import com.google.maps.overlays.MarkerOptions;
+			import mx.events.IndexChangedEvent;
+			import mx.containers.accordionClasses.AccordionHeader;
+			import mx.events.ItemClickEvent;
+			import mx.controls.CheckBox;
+			import com.AppShareObj;
+			import mx.events.TreeEvent;
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.http.mxml.HTTPService;
+			import com.pioneer.http.UrlService;
+			import mx.core.Application;
+			import mx.managers.PopUpManager;
+			private var map:Map=null;
+			
+			public function setMap(tmap:Map):void{
+				this.map=tmap;
+			}
+			private var treedoc:XML=null;
+			private function init():void{
+				this.height=Application.application.screen.height;
+				companyInit();
+				treeInit();
+				this.dateinput.dayNames=['日','一','二','三','四','五','六'];
+				this.dateinput.monthNames=['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+				this.dateinput.formatString="YYYYMM";
+				this.dateinput.styleName="label";
+				areaInit();
+			}
+			private function treeInit():void{
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="physicalObjType";
+				var typeTreeData:HTTPService = new HTTPService();
+				typeTreeData.url=UrlService.getShapanCDSURL();
+                typeTreeData.contentType="application/xml";   
+                typeTreeData.resultFormat="e4x";
+                typeTreeData.method = "POST";
+                typeTreeData.showBusyCursor=true;
+                typeTreeData.addEventListener("result", buildTree);
+                typeTreeData.addEventListener("fault", httpFault);
+                typeTreeData.send(doc);
+                //Alert.show(doc.toXMLString());
+				
+			}
+			private function httpFault(event:FaultEvent):void {
+                Alert.show("网络连接错误，请重试！");
+            }
+             private function buildTree(event:ResultEvent):void {
+                var xml:XML = (XML)(event.result);
+                this.treedoc=xml;
+            	var menus:XMLList=xml.DATAPACKET.ROWDATA.ROW;
+            	coreTree.dataProvider=menus;
+            	coreTree.labelField="@NAME";
+            	coreTree.id="@ID";
+            	coreTree.name="@ID";
+            	for each(var row:Object in menus){
+            		openItem(coreTree,row);
+            	}
+            }
+            private function openItem(tree:Tree,item:Object):void{
+            	tree.expandChildrenOf(item,true);	
+            }
+            private function areaInit():void{
+            	if(null==this.areaTree)return;
+            	if(null!=this.areadoc)return;
+				var pars:Object=new Object();
+				pars.req_type="all";
+				pars.tblName="区域";
+				
+				var typeTreeData:HTTPService = new HTTPService();
+				typeTreeData.url=UrlService.getTreeUrl();
+                typeTreeData.resultFormat="e4x";
+                typeTreeData.method = "POST";
+                typeTreeData.showBusyCursor=true;
+                typeTreeData.addEventListener("result", buildAreaTree);
+                typeTreeData.addEventListener("fault", httpFault);
+                
+                typeTreeData.send(pars);
+                //Alert.show(doc.toXMLString());
+				
+			}
+			private function buildAreaTree(event:ResultEvent):void {
+				try{
+					var xml:XML = (XML)(event.result);
+					this.areadoc=xml;
+	                //Alert.show(xml.toXMLString());
+	            	var menus:XMLList=xml.DATAPACKET.ROWDATA.ROW;
+	            	if(null==this.areaTree){
+	            		Alert.show("the area tree is null");
+	            		this.areaTree=new Tree();
+	            		this.areaTree.addEventListener(ListEvent.ITEM_CLICK,selectNode);
+	            		this.areaTree.styleName="tree";
+	            		this.areaTree.percentHeight=100;
+	            		this.areaTree.percentWidth=100;
+	            		this.areaTreeP.addChild(this.areaTree);
+	            	}
+	            	this.areaTree.dataProvider=menus;
+	            	this.areaTree.labelField="@NAME";
+	            	this.areaTree.id="@ID";
+	            	this.areaTree.name="@ID";
+				}catch(e:Error){
+					Alert.show(e.getStackTrace());
+				}
+                
+            	 	
+            }
+            private function selectNode(e:Event):void{
+                 var mytree:Tree=Tree(e.currentTarget);
+                
+                 var id:String=e.currentTarget.selectedItem.@ID;
+                 var name=e.currentTarget.selectedItem.@NAME;
+                 var pid=e.currentTarget.selectedItem.@PID;
+                 var node:Object=new Object();
+                 node.name=name;
+                 node.id=id;
+                 node.pid=pid;
+                var item:XML= mytree.selectedItem as XML
+                //Alert.show(item.@selected);
+                if(item.children().length()>0){
+                	node.hasChild=true;
+                	setChildAsParent(item);
+                }else{
+                	node.hasChild=false;
+                }
+                 
+            }
+            
+            private function setChildAsParent(item:XML):void{
+            	if(item.children().length()>0){
+                	var chs:XMLList=item.children();
+					for each (var ch:XML in chs){
+						ch.@selected=item.@selected;
+						if(ch.children().length()>0){
+							setChildAsParent(ch);
+						}
+					}
+                }
+            }
+            private function companyInit():void{
+            	var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="list";
+				doc.@TABLE="对比集团";
+				doc.@CONDITION="name!='"+AppShareObj.companyName+"'";
+				var typeTreeData:HTTPService = new HTTPService();
+				typeTreeData.url=UrlService.getCDSActionUrl();
+                typeTreeData.contentType="application/xml";   
+                typeTreeData.resultFormat="e4x";
+                typeTreeData.method = "POST";
+                typeTreeData.showBusyCursor=true;
+                typeTreeData.addEventListener("result", buildCompany);
+                typeTreeData.addEventListener("fault", httpFault);
+                typeTreeData.send(doc);
+            }
+            private function buildCompany(event:ResultEvent):void {
+                var xml:XML = (XML)(event.result);
+               
+            	 //companyp
+            	var rows:XMLList=xml.TABLEDATA.ROWDATA.ROW;
+            	var checkBox:CheckBox=null;
+            	for each(var row:XML in rows){
+            		var checkBox:CheckBox=new CheckBox();
+            		checkBox.document=row;
+            		checkBox.label=row.@NAME;
+            		checkBox.id=row.@ID;
+            		checkBox.name=row.@ID;
+            		
+            		companyp.addChild(checkBox);
+            	}	
+            }
+            
+            private var areadoc:XML=null;
+            private function accordionClick(e:IndexChangedEvent):void{
+            	var index:int=e.newIndex;
+            	if(1==index && null==areadoc){
+            		areaInit();
+            	}
+            }
+             
+            private function setAreaType(index:int):void{
+            	areaInit();
+            	displaybar.selectedIndex=index;
+            }
+            private function addSelObj(objsElt:XML,row:XML):void{
+            	var code:String=row.@CODE;
+            	if(null!=code && ""!=code){
+            		var selected:String=row.@selected;
+            		var name:String=row.@NAME;
+            		
+            		if("true"==selected){
+            			var elt:XML=<obj/>;
+            			elt.@CODE=code;
+            			elt.@NAME=row.@NAME;
+            			objsElt.appendChild(elt);
+            		}
+            	}else{
+            		var crows:XMLList=row.children();
+            		if(crows.length()>0){
+            			for each(var crow:XML in crows){
+            				addSelObj(objsElt,crow);
+            			}
+            		}
+            	}
+            }
+            private function addSelArea(areaElt:XML,row:XML):void{
+            	var selected:String=row.@selected;
+            	if("true"==selected){
+            		var elt:XML=<area/>;
+            		elt.@ID=row.@ID;
+            		areaElt.appendChild(elt);
+            	}
+            	var crows:XMLList=row.children();
+        		if(crows.length()>0){
+        			for each(var crow:XML in crows){
+        				addSelArea(areaElt,crow);
+        			}
+        		}
+            }
+            private function submitSearch():void{
+            	var scdoc:XML=<DATAPACKETS/>;
+            	scdoc.@ACTION="search";
+            	var objLs:XML=<objs/>;
+            	//------收集检索的数据类型
+            	var menus:XMLList=this.treedoc.DATAPACKET.ROWDATA.ROW;
+            	for each(var row:XML in menus){
+            		addSelObj(objLs,row);
+            	}
+            	scdoc.appendChild(objLs);
+            	var objs:XMLList=objLs.children();
+            	if(objs.length()<1){
+            		Alert.show("请选择检索的数据类型！");
+            		return;
+            	}
+            	//---------收集检索的信息是属于哪个集团
+            	var checkboxs:Array=companyp.getChildren();
+            	var oCompanyElts:XML=<ocompanys/>;
+            	for each(var cbox:CheckBox in checkboxs){
+            		//加入没有选中的数据。
+            		if(!cbox.selected){
+            			var elt:XML=<ocompany/>;
+            			elt.@ID=cbox.name;
+            			oCompanyElts.appendChild(elt);
+            		}
+            	}
+            	scdoc.appendChild(oCompanyElts);
+            	//----------收集搜索关键字
+            	var keyElt:XML=<key/>;
+            	keyElt.@value=keyval.text;
+            	scdoc.appendChild(keyElt);
+            	
+            	//---------收集数据地理范围
+            	var AreaElt:XML=<areas/>;
+            	if(null!=arearadio && arearadio.selected){
+            		AreaElt.@type="area";
+            		//添加地理编号到收集信息。
+	            	var areas:XMLList=this.areadoc.DATAPACKET.ROWDATA.ROW;
+	            	for each(var row:XML in areas){
+	            		addSelArea(AreaElt,row);
+	            	}
+            	}else if(null!=lngradio && lngradio.selected){
+            		AreaElt.@type="lng";
+            	}else{
+            		AreaElt.@type="area";
+            	}
+            	scdoc.appendChild(AreaElt);
+            	//----------发送请求。
+            	var typeTreeData:HTTPService = new HTTPService();
+				typeTreeData.url=UrlService.getShapanCDSURL();
+                typeTreeData.contentType="application/xml";   
+                typeTreeData.resultFormat="e4x";
+                typeTreeData.method = "POST";
+                typeTreeData.showBusyCursor=true;
+                typeTreeData.addEventListener("result", showOnMap);
+                typeTreeData.addEventListener("fault", httpFault);
+                typeTreeData.send(scdoc);
+            }
+            private function showOnMap(event:ResultEvent):void {
+                var xml:XML = (XML)(event.result);
+                var objs:XMLList=xml.OBJ;
+                var markerOptions:MarkerOptions =null;
+                var marker:Marker =null;
+                var options2:InfoWindowOptions=null;
+                for each(var obj:XML in objs){
+                	var imgfile:String=obj.@ICON;
+					markerOptions = new MarkerOptions(); 
+					var iconPath=UrlService.getServiceUrl()+"upload/ctl_biaoji/"+imgfile;
+					var request:URLRequest = new URLRequest(iconPath); 
+					var imageLoader:Loader = new Loader(); 
+					imageLoader.load(request)
+					markerOptions.icon = imageLoader;
+			        markerOptions.tooltip =obj.@NAME; 
+			        markerOptions.iconAlignment = MarkerOptions.ALIGN_VERTICAL_CENTER+MarkerOptions.ALIGN_HORIZONTAL_CENTER; 
+					marker = new Marker(new LatLng(obj.@X,obj.@Y), markerOptions);
+					
+					if(null!=this.map){
+						map.setCenter(new LatLng(obj.@X,obj.@Y));
+						this.map.addOverlay(marker);
+					}else{
+						Alert.show("the map is null");
+					}
+					var win:MarketObjectWin=new MarketObjectWin();
+					win.setMate(obj);
+					
+					options2= new InfoWindowOptions({
+		                customContent: win,
+		                customOffset: new Point(0, 10),
+		                
+		                drawDefaultFrame: true
+		            });
+		            
+			        marker.addEventListener(MapMouseEvent.CLICK, function(e:Event):void {
+		                marker.openInfoWindow(options2); 
+		            });
+		            //marker.openInfoWindow(options2); 
+                }
+                if(null!=marker)
+               		marker.openInfoWindow(options2); 
+            }
+		]]>
+	</mx:Script>
+	<mx:Panel headerHeight="15" height="100%" width="100%">
+		<mx:Box height="95%" width="100%" styleName="label">
+			
+			
+			
+		<mx:Box styleName="label" height="100%" width="100%">
+			<mx:Accordion id="accordionp" change="accordionClick(event);" headerStyleName="accordionHead"  x="55" y="20" width="100%" height="100%" styleName="accordion">
+				<mx:Box label="信息类型" styleName="label"  height="100%" width="100%" horizontalAlign="center">
+					<mx:Panel headerHeight="15" height="100%" width="85%">
+					<mx:Tree id="coreTree" itemClick="selectNode(event)" itemRenderer="com.tree.TreeCheckBoxRenderer" styleName="tree" width="100%" height="100%"/>
+					</mx:Panel>
+					<mx:Panel id="companyp" horizontalAlign="center" layout="horizontal" title="竞争对手" height="70" width="100%">
+						
+					</mx:Panel>
+				</mx:Box>
+				<mx:Box label="所属区域" styleName="label"  height="100%" width="100%" horizontalAlign="center">
+					<mx:ApplicationControlBar width="100%">
+						<mx:TabBar height="0" width="0" id="tabplace" paddingLeft="1" paddingRight="1" left="1" selectedTabTextStyleName="selectedTab"  alpha="1" styleName="tabStyle" dataProvider="displaybar"/>
+						<mx:RadioButton label="区域检索" id="arearadio" click="setAreaType(0)" groupName="areatype" selected="true"/>
+						<mx:RadioButton label="坐标检索" id="lngradio" click="setAreaType(1)" groupName="areatype" selected="false"/>
+					</mx:ApplicationControlBar>
+					<mx:ViewStack height="100%" width="100%" styleName="label" id="displaybar" horizontalGap="1">
+						<mx:Panel label="所在区域" id="areaTreeP"  headerHeight="15" height="100%" width="85%" cornerRadius="10" backgroundColor="#123456">
+							
+							<mx:Tree id="areaTree" creationComplete="areaInit();" itemClick="selectNode(event)" itemRenderer="com.tree.TreeCheckBoxRenderer" styleName="tree" width="100%" height="100%"/>								
+						</mx:Panel>
+							
+						<mx:Box label="坐标检索">
+							<mx:Label text="坐标检索"/>
+						</mx:Box>
+						
+					</mx:ViewStack>
+				</mx:Box>
+				
+			</mx:Accordion>
+		</mx:Box>
+				
+			
+		</mx:Box>
+		<mx:HRule width="100%"/>
+		<mx:Panel headerHeight="20" label="数据产生时间" verticalGap="7" cornerRadius="15" height="60" width="100%">
+			<mx:HBox>
+				<mx:Label text="搜索词:" styleName="label"/>
+				<mx:TextInput id="keyval" width="90" styleName="textInput"/>
+			</mx:HBox>
+			<mx:HBox height="0">
+				<mx:Label text="数据产生时间:" styleName="label"/>
+				<mx:DateField id="dateinput" height="21" fontSize="12"/>
+			</mx:HBox>
+		</mx:Panel>
+		<mx:HBox height="5%" width="100%" horizontalAlign="center">
+			<mx:ApplicationControlBar width="100%" height="100%">
+				<mx:Button label="提交" click="submitSearch();" styleName="okbtn"/>
+				<mx:Button label="取消" styleName="delbtn"/>
+			</mx:ApplicationControlBar>	
+		</mx:HBox>
+	</mx:Panel>
+	
+</mx:TitleWindow>

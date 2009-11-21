@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="300"
+	 creationComplete="complete()"
+	 preinitialize="getData();"
+
+	 
+	 >
+	 
+	 <mx:Style source="style/main.css"/>
+	<mx:Script>
+	
+        <![CDATA[
+        	import mx.managers.PopUpManager;
+        	import view.list.ListObjWindow;
+        	import mx.core.Application;
+        	import mx.utils.XMLUtil;
+        	import view.selWin.WinLabel;
+        	import mx.core.UITextField;
+        	import mx.controls.Label;
+        	import mx.rpc.http.mxml.HTTPService;
+        	import com.pioneer.http.UrlService;
+        	import mx.rpc.events.FaultEvent;
+        	import mx.rpc.events.ResultEvent;
+        	import mx.controls.Alert;
+        	var twidth:int=0;
+        	var moreInfo:ContextMenuItem =null;
+        	var infomg:ContextMenuItem=null;
+        	var freshinfo:ContextMenuItem=null;
+        	private function resizefun():void{
+        		if(infop.width>twidth){
+        			move_up.stop();
+        		}else{
+        			setMovepiont();
+        		}
+        	}
+            private function complete():void
+            {
+            	
+                //move_up.yFrom = cs.height - 6;    //"加6减6是为了首尾连接更加自然"
+                //move_up.yTo = 0 - tt.height + 6;  //同上
+               	var children:Array=infop.getChildren();
+               	
+               	var child:Box=null;
+               	for(var i=0;i<children.length;i++){
+               		child=children[i];
+               		twidth+=child.width;
+               	}
+                move_up.xFrom=60;
+                move_up.xTo=0-twidth-1;
+                move_up.xBy=100;
+                move_up.repeatCount = 0; //无限次重复
+                move_up.repeatDelay = 0; //重复时间，毫秒
+                move_up.duration = 6000*4; //滚动一次的时间，毫秒
+                move_up.play();
+                ////////////////添加快捷菜单///////////////
+                var menu:ContextMenu = new ContextMenu();
+                
+                freshinfo= new ContextMenuItem('刷新信息');
+                freshinfo.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+                	infop.removeAllChildren();
+                	getData();
+                });
+                 menu.customItems.push(freshinfo);
+            	moreInfo = new ContextMenuItem('更多信息');
+            	moreInfo.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+              		//Alert.show("显示更多信息");
+              		
+	               /////////////////////打开更多信息窗口//////////////////////
+	               var infowin:ListObjWindow =null;
+	            	
+	            		if(null==infowin){
+	            			infowin =ListObjWindow(PopUpManager.createPopUp(infop, ListObjWindow, true));
+	            			infowin.title="及时信息";
+	            			infowin.setDelfun(false);
+	            			infowin.setMenubarVisible(false);
+	            			var cols:Array=new Array();
+	            			var name:Object=new Object();
+	            			name.code="NAME";
+	            			var content:Object=new Object();
+	            			content.code="CONTENT";
+	            			
+	            			
+	            			cols.push(name);
+	            			cols.push(content);
+	            			infowin.setSearchCols(cols);
+	            			infowin.styleName="label";
+	            		}
+	            		{
+	            			infowin.showCloseButton=true;
+			              	infowin.setDateFormat("YYYYMMDD");
+			              	infowin.setMeta("及时信息",null,"OPENTYPE='公开' order by UPDATE_TIME desc limit 60");
+		              		infowin.width=Application.application.screen.width;
+		              		infowin.height=Application.application.screen.height;
+		              		infowin.x=(Application.application.screen.width)/2-infowin.width/2;
+		                	infowin.y=Application.application.screen.height/2-infowin.height/2;
+		                	
+	            		}
+	            });
+	            menu.customItems.push(moreInfo);
+	            
+	            infomg= new ContextMenuItem('信息发布');
+	            infomg.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+	            	Alert.show('信息发布管理');
+	            });
+	            menu.customItems.push(infomg);
+	            this.contextMenu=menu;
+            }
+            private function setMovepiont():void{
+            	if(move_up.xFrom!=60){
+            		move_up.xFrom=60;
+	            	
+	            	move_up.stop();
+	            	move_up.play();
+            		
+            	}
+            	
+            	
+            }
+            
+            private function move_pause():void
+            {
+                move_up.pause();  //暂停
+            }
+            
+            private function move_resume():void
+            {
+                move_up.resume(); //从暂停位置开始
+            }
+            
+            private function getData():void{
+            	
+            	
+            	var doc:XML=<DATAPACKET/>;
+            	doc.@ACTION="list";
+            	doc.@TABLE="及时信息";
+            	doc.@CONDITION="OPENTYPE='公开' order by UPDATE_TIME desc limit 15";
+            	var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getListUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onDataResult);
+				dataService.send(doc);
+            }
+            private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("网络连接错误，请重试！");
+			}
+			protected function onDataResult(e:ResultEvent):void{
+				
+				var tmpdoc:XML=XML(e.result);
+				
+				var rows:XMLList=tmpdoc.TABLEDATA.ROWDATA.ROW;
+				for each(var row:XML in rows){
+					var leveltype:String=XMLUtil.getAttributeByQName(row,new QName("LEVELTYPE"));
+					
+					var lb:WinLabel=new WinLabel();
+					lb.setInfo(row);
+					
+					var box:Box=new Box();
+					box.addChild(lb);
+					if("紧急"==leveltype){
+						lb.styleName="redlabel";
+						//box.styleName="redlabel";
+						
+					}
+					infop.addChild(box);
+				}
+			}
+			
+        ]]>
+    </mx:Script>
+    <mx:Move id="move_up" target="{infop}" effectStart="setMovepiont();"/>
+    <mx:Panel id="app"  width="100%" height="40" headerHeight="13" layout="absolute" title="公告栏" 
+        fontSize="12" horizontalCenter="0" verticalCenter="0" horizontalGap="0" verticalGap="0">
+        <mx:Box id="cs" width="100%" height="100%" left="0" top="0" horizontalGap="0"
+             horizontalScrollPolicy="off" mouseOver="move_pause()" mouseOut="move_resume()">
+             
+            <mx:HBox id="infop" width="100%" fontSize="13">
+            		
+            </mx:HBox>
+        </mx:Box>
+    </mx:Panel>
+</mx:Box>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:TextInput xmlns:mx="http://www.adobe.com/2006/mxml">
+	<mx:Metadata>
+    	[Event(name="dataChange", type="event.FKEvent",bubbles="true",cancelable="true")]
+	</mx:Metadata>
+	<mx:Script>
+		<![CDATA[
+			import view.selWin.ObjSelWindow;
+			import event.FKEvent;
+			import mx.core.IFlexDisplayObject;
+			import view.selWin.SelWindow;
+			import mx.managers.PopUpManager;
+		/***/
+			import mx.controls.Alert;
+			import mx.utils.XMLUtil;
+			
+			public var code:String=null;
+			public var mate:XML=null;
+			public function setInfo(mate:XML,row:XML):void{
+				this.mate=mate;
+				if(null!=row){
+					var val=XMLUtil.getAttributeByQName(row,new QName(mate.@NAME));
+					var nameVal=XMLUtil.getAttributeByQName(row,new QName((mate.@NAME)+"_NAME"));
+					//Alert.show(nameVal);
+					this.text=nameVal;
+					this.code=val;
+				}
+				
+				//idp.text=val;
+				this.addEventListener(MouseEvent.CLICK ,changeValue);
+			}
+			public function setCN(code:String , name:String):void{
+				this.text=name;
+				this.code=code;
+				var e:FKEvent = new  FKEvent(FKEvent.DATA_CHANGE);
+				var obj:Object=new Object();
+				obj.name=name;
+				obj.id=code;
+				e.setCN(obj);
+               	dispatchEvent(e);
+			}
+		private function changeValue(e:MouseEvent):void{
+			try{
+				var struct:String=this.mate.@STRUCT;
+				if("tree"==struct){
+					var selWin:SelWindow =SelWindow(PopUpManager.createPopUp(this, SelWindow, false));
+					selWin.setFKInput(this);
+					selWin.setMate(this.mate);
+					
+					var point2:Point = new Point();
+					point2=this.localToGlobal(point2);
+					selWin.x=point2.x+15;
+	                selWin.y=point2.y+5;
+				}else if("list"==struct){
+					var tblName:String=this.mate.@FKTBL;
+					var listWin:ObjSelWindow =ObjSelWindow(PopUpManager.createPopUp(this, ObjSelWindow, false));
+					listWin.title=tblName;
+					listWin.setFKInput(this);
+					listWin.setMeta(tblName);
+					var point2:Point = new Point();
+					point2=this.localToGlobal(point2);
+					listWin.x=point2.x+15;
+	                listWin.y=point2.y+5;
+				}
+				
+			}catch(e:Error){
+				Alert.show(e.message);
+			}
+			
+		}
+		]]>
+	</mx:Script>
+	
+</mx:TextInput>

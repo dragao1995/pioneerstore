@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="300">
+	<mx:Script>
+		<![CDATA[
+			import mx.core.Application;
+			import mx.managers.PopUpManager;
+			import view.selWin.ObjWindow;
+			
+			private function show():void{
+				var selWin:ObjWindow =ObjWindow(PopUpManager.createPopUp(this, ObjWindow, true));
+				
+				var hiddenLs:Array=new Array();
+				hiddenLs.push("OBJIMG");
+				selWin.setHiddenLs(hiddenLs);
+				selWin.setCondition("分公司","ID=10");
+				
+				selWin.showCloseButton=true;
+				
+				selWin.x=(Application.application.screen.width-selWin.width)/2;
+                selWin.y=(Application.application.screen.height-selWin.height)/2;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label text="战略监控"/>
+	<mx:Button label="显示" click="show();"/>
+</mx:Box>

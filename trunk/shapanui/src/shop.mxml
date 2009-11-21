@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"
+	xmlns:info="view.Info.*"
+	creationComplete="init();"
+	xmlns:accordion="view.accordion.*"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+        <![CDATA[
+        	import shop.DingWei;
+        	import mx.containers.Tile;
+        	import view.ZixunWin;
+        	import mx.events.ListEvent;
+        	import shop.TypePage;
+        	import shop.MainPage;
+        	import shapan.ShapanSystemMg;
+        	import com.SharedObjectUtil;
+        	import mx.rpc.events.ResultEvent;
+        	import mx.rpc.events.FaultEvent;
+        	import com.pioneer.http.UrlService;
+        	import mx.rpc.http.mxml.HTTPService;
+        	import com.AppShareObj;
+    	import shapan.ZLJiankong;
+    	import event.accordion.HAccordionEvent;
+
+    	
+    	import shapan.Status;
+    	import view.Info.InfoView;
+    	import shapan.ZLTuiyan;
+        	
+    	
+    	import mx.controls.Alert;
+    	import mx.managers.PopUpManager;
+    	import view.GoodTypeWin;
+    	import com.google.maps.overlays.MarkerOptions;
+        import com.google.maps.overlays.Marker;
+        import com.google.maps.LatLng;
+        import com.google.maps.Map;
+        import com.google.maps.MapEvent;
+        import com.google.maps.MapMouseEvent;
+        import com.google.maps.MapType;
+        import com.google.maps.MapOptions;
+        import com.google.maps.InfoWindowOptions;
+       ///////////////////////系统主要功能对象/////////////////////////
+       private var mainPage:MainPage=null;
+       private var teaPage:TypePage=null;
+       private var feicuiPage:TypePage=null;
+       private var gendiaoPage:TypePage=null;
+       
+       private var otherPage:TypePage=null;
+       private var info:InfoView=null;
+       private var status :Status=null;
+       private function init():void{
+       	//zone1.setSource2("assets/mainhead.gif","assets/mainheadtitle.gif");
+       	zone1.setSource2("assets/mainhead.swf","assets/mainheadtitle.gif");
+       	
+       	zone2.setSource2("assets/teahead.swf","assets/teaheadtitle.gif");
+       	zone3.setSource2("assets/feicuihead1.swf","assets/feicuiheadtitle.gif");
+       	zone4.setSource2("assets/gendiaohead.swf","assets/gendiaoheadtitle.gif");
+       	zone5.setSource2("assets/otherhead.swf","assets/otherheadtitle.gif");
+       	if(null==mainPage){
+			mainPage=new MainPage();
+	       	mainPage.percentHeight=100;
+	       	mainPage.percentWidth=100;
+		}
+		//天然的才是最美的！  首页 茶叶
+       	mainplace.addChild(mainPage);
+       	zone1.hOpen();
+       
+       	///////////////////////////添加登陆功能///////////////////////////////
+	           // 如果没有本地信息，
+	            
+	            //AppShareObj.loginTest(this);
+	            
+	            //初始化数据提取
+	            var tmplService:HTTPService = new HTTPService();
+				//tmplService.url = "mode/data/detaildoc.xml";
+				//tmplService.url = UrlService.getDetailUrl();
+				if(null==UrlService.getServiceUrl()){
+					tmplService.url = "assets/info.xml";
+				}else{
+					tmplService.url = UrlService.getServiceUrl()+"assets/info.xml";
+				}
+				
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				tmplService.send(null);
+       }
+		private function onFaultHttpService(e:FaultEvent):void
+		{
+			Alert.show("网络连接错误，请重试！");
+		}
+		protected function onXMLResult(e:ResultEvent):void{
+			
+			var tmpdoc:XML=XML(e.result);
+			
+			SharedObjectUtil.setServiceURL(tmpdoc.@url);
+			SharedObjectUtil.setShopName(tmpdoc.@shopName);
+		}
+        public function menuctrl(e:ContextMenuEvent):void{
+			//setInfo.enabled=AppShareObj.isPriview("menu-p-sys-mg");
+			//spending.enabled=AppShareObj.isPriview("menu-p-spend");
+		}
+    private var point1:Point = new Point();
+   
+        
+    private function headCtrl(e:MouseEvent):void{
+    	try{
+    		var obj:Object=e.currentTarget;
+	    	if(obj ==this.ctlbar ){
+	    		
+	    		if(heardBar.height>10){
+					heardBar.height=0;
+					mainplace.percentHeight=100;
+				}else{
+					heardBar.percentHeight=20;
+					mainplace.height=Application.application.screen.height-heardBar.height-4-4;
+				}
+				if(null!=mainplace)
+					mainplace.percentHeight=100;
+	    	}
+    	}catch(ev:Error){
+    		Alert.show(ev.getStackTrace());
+    	}
+				
+	}
+        
+         private function headCtrl1():void{
+    	try{
+    		
+	    		
+	    		if(heardBar.height>10){
+					heardBar.height=0;
+					mainplace.percentHeight=100;
+				}else{
+					heardBar.percentHeight=20;
+					mainplace.height=Application.application.screen.height-heardBar.height-4-4;
+				}
+				if(null!=mainplace)
+					mainplace.percentHeight=100;
+	    
+    	}catch(ev:Error){
+    		Alert.show(ev.getStackTrace());
+    	}
+				
+	}
+        private function openMenu():void{
+        	if(heardBar.height==0){
+        		heardBar.percentHeight=20;
+				mainplace.height=Application.application.screen.height-heardBar.height-4-4;
+        	}
+        	if(null!=mainplace)
+					mainplace.percentHeight=100;
+        	
+        }
+    	private function openAccordion(ee:HAccordionEvent):void{
+			mainplace.removeAllChildren();
+			var zoneName:String=ee.getAccordionName();
+			if("zone1"==zoneName){
+				
+				if(null==this.mainPage){
+			       	this.mainPage.percentHeight=100;
+			       	this.mainPage.percentWidth=100;
+				}
+				
+		       	mainplace.addChild(	this.mainPage);
+		       	//this.zone1.resize();
+			}else if("zone2"==zoneName){
+				if(null==teaPage){
+					teaPage=new TypePage();
+					teaPage.percentHeight=100;
+					teaPage.percentWidth=100;
+					teaPage.mainType="茶";
+					teaPage.mainTypeName="茶叶";
+					teaPage.rootId="6";
+				}
+				
+				mainplace.addChild(	this.teaPage);
+			}else if("zone3"==zoneName){
+				if(null==this.feicuiPage){
+					this.feicuiPage=new TypePage();
+					this.feicuiPage.mainType="翡翠";
+					this.feicuiPage.mainTypeName="翡翠";
+					this.feicuiPage.rootId="2";
+					
+					this.feicuiPage.percentHeight=100;
+					this.feicuiPage.percentWidth=100;
+					
+				}
+				
+				mainplace.addChild(this.feicuiPage);
+			}else if("zone4"==zoneName){
+				if(null==this.gendiaoPage){
+					this.gendiaoPage=new TypePage();
+					this.gendiaoPage.mainType="根雕";
+					this.gendiaoPage.mainTypeName="根雕";
+					this.gendiaoPage.rootId="3";
+					
+					this.gendiaoPage.percentHeight=100;
+					this.gendiaoPage.percentWidth=100;
+				}
+				mainplace.addChild(this.gendiaoPage);
+			}else if("zone5"==zoneName){
+				//var sys:ShapanSystemMg=new ShapanSystemMg();
+				//mainplace.addChild(sys);
+				if(null==this.otherPage){
+					this.otherPage=new TypePage();
+					this.otherPage.mainType="其他";
+					this.otherPage.mainTypeName="商品";
+					this.otherPage.rootId="34";
+					
+					this.otherPage.percentHeight=100;
+					this.otherPage.percentWidth=100;
+				}
+				mainplace.addChild(this.otherPage);
+			}
+			
+			
+		}
+		
+		private function openGWC():void{
+			Alert.show("打开购物车");
+		}
+		private var dinwei:DingWei=null;
+		private function menuOpen(item:ListEvent):void{
+	    	if(0==item.rowIndex){
+	    		var userWin:ZixunWin =ZixunWin(PopUpManager.createPopUp(this, ZixunWin, false));
+	    		var point2:Point = new Point();
+				point2=AppSelection.localToGlobal(point2);
+				userWin.x=point2.x-150;
+                userWin.y=point2.y-5;
+	    	}else if(1==item.rowIndex){
+	    		//
+	    		if(null==this.dinwei){
+	    			this.dinwei=new DingWei();
+	    			
+	    		}
+	    		mainplace.removeAllChildren();
+	    		mainplace.addChild(this.dinwei);
+	    	}else if(2==item.rowIndex){
+	    		//daohang
+	    		navigateToURL(new URLRequest("http://www.fg001.com"),"_bank");
+	    	}
+	    	
+	    }
+        ]]>
+  </mx:Script>
+  
+  	<mx:HBox  height="100%" width="100%" horizontalGap="0" >
+  		<mx:Box width="5" height="100%" backgroundColor="#66ff00">
+  			
+  		</mx:Box>
+  		<mx:Panel layout="vertical" borderColor="#065900" headerHeight="6" height="100%" width="100%" verticalGap="0" backgroundColor="#065900">
+	
+			<mx:HBox id="heardBar" styleName="parentbox"  name="testbox" width="100%"  horizontalGap="1" height="20%">
+				<accordion:HAccordion id="zone1" haccortionClick="openAccordion(event);" paddingLeft="0" paddingRight="0" width="100%"/>
+				<accordion:HAccordion id="zone2" haccortionClick="openAccordion(event);" paddingLeft="0" paddingRight="0" />
+				<accordion:HAccordion id="zone3" haccortionClick="openAccordion(event);" paddingLeft="0" paddingRight="0" />
+				<accordion:HAccordion id="zone4" haccortionClick="openAccordion(event);" paddingLeft="0" paddingRight="0" />
+				<accordion:HAccordion id="zone5" haccortionClick="openAccordion(event);" paddingLeft="0" paddingRight="0" />
+			</mx:HBox>
+			
+			<mx:HBox mouseUp="headCtrl(event)" mouseOver="headCtrl1();" backgroundColor="#065900"   id="ctlbar"   height="12" horizontalAlign="right" width="100%"  horizontalGap="0" verticalGap="0" paddingRight="10">
+			
+				<mx:Image id="gwcimg" toolTip="购物车" name="gwcimg" source="assets/icon_cart_full.png" click="openGWC();" height="11" />
+				<mx:Image id="search" toolTip="商品比较" name="search" source="assets/search.png" click="openGWC();" height="11" />
+			</mx:HBox>
+			
+			
+			<mx:Box id="mainplace" height="100%" width="100%" backgroundColor="#B7FD7E">
+				
+			</mx:Box>
+			<mx:Box id="statusp" horizontalGap="0" verticalGap="0" width="100%" height="10">
+				
+			</mx:Box>
+			
+		</mx:Panel>
+  		<mx:VBox width="35"  height="100%" backgroundColor="#66ff00" horizontalGap="0">
+  			<mx:Box height="135" color="0x323232">
+  				
+  			</mx:Box>
+  			<mx:TileList id="AppSelection" backgroundColor="#66ff00" styleName="label" itemClick="menuOpen(event);" paddingLeft="0" y="200" height="100%" color="0x323232" maxColumns="1"  >
+	            <mx:dataProvider>
+	                <mx:Array>
+	                   
+	                    <mx:Object label="咨询" icon="@Embed('assets/zixun.gif')"/>
+	                    <mx:Object label="定位" icon="@Embed('assets/dingwei.gif')"/>
+	                    <mx:Object label="导航" icon="@Embed('assets/daohang.gif')"/>
+	                    <mx:Object label="说明" icon="@Embed('assets/zixun.gif')"/>
+	                </mx:Array>
+	            </mx:dataProvider>
+	        </mx:TileList>
+	       
+  		</mx:VBox>
+  	</mx:HBox>
+	
+</mx:Application>

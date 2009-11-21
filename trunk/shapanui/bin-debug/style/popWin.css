@@ -1,0 +1,33 @@
+/* CSS file */
+.win{
+	font-size:14;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:normal;
+	color:#7AF106;
+	text-selected-color:#ff0000;
+	text-align:center;
+	background-color:#e1feba;
+	border-color:#e1feba;
+}
+/** 取消按钮*/
+.delbtn{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:bold;
+	text-align:center;
+	text-roll-over-color:#7AF106;
+	
+	icon:Embed(source="../view/images/del.gif");
+}
+/** 确认按钮*/
+.okbtn{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:bold;
+	text-align:center;
+	text-roll-over-color:#7AF106;
+	icon:Embed(source="../view/images/ok.gif");
+}

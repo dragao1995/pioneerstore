@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" disabledOverlayAlpha="1"
+	close="PopUpManager.removePopUp(this);"
+	horizontalGap="0"
+	verticalGap="0"
+	styleName="label"
+	doubleClick="PopUpManager.removePopUp(this);"
+	creationComplete="init();"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import com.pioneer.http.UrlService;
+			import mx.rpc.http.mxml.HTTPService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import com.ResultFilter;
+			import mx.core.Application;
+			////////////////////////fk关联对象的显示窗口////////////////////////
+			import mx.controls.Alert;
+			import mx.utils.XMLUtil;
+			import view.object.SingleObjectView;
+		
+			import mx.managers.PopUpManager;
+			private var addfun:Boolean=true;
+			private var editfun:Boolean=true;
+			private var delfun:Boolean=true;
+			private var comp:String=null;
+			
+			private var closebtn:ContextMenuItem =null;
+			
+			private var hiddenLs:Array=null;
+			
+			public function setComp(comp:String):void{
+				this.comp=comp;
+			}
+			public function setHiddenLs(hiddenLs:Array):void{
+				this.hiddenLs=hiddenLs;
+			}
+			private function init():void{
+				var menu:ContextMenu = new ContextMenu();
+            	closebtn = new ContextMenuItem('关闭');
+            	closebtn.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+              		closeWin();
+	               
+	            });
+	            menu.customItems.push(closebtn);
+	            
+	            
+	            
+	            this.contextMenu=menu;
+			}
+			
+			
+			
+			private function closeWin():void{
+				PopUpManager.removePopUp(this);
+			}
+			public function setAddfun(flg:Boolean):void{
+				this.addfun=flg;
+			}
+			public function setEditfun(flg:Boolean):void{
+				this.editfun=flg;
+			}
+			public function setDelfun(flg:Boolean):void{
+				this.delfun=flg;
+			}
+			 public function setMate(mate:XML,row:XML):void{
+			 	try{
+			 		this.minWidth=mate.@WIDTH;
+			 		this.minHeight=mate.@HEIGHT;
+			 		this.maxHeight=Application.application.screen.height-200;
+			 		this.maxWidth=Application.application.screen.width/2;
+			 		var tblName=mate.@FKTBL;
+			 		var labelWidth=mate.@LABELWIDTH;
+	            	var objbrowse:SingleObjectView=new SingleObjectView();
+	            	this.addChild(objbrowse);
+	            	var val=XMLUtil.getAttributeByQName(row,new QName(mate.@NAME));
+	            	//Alert.show("val="+val+"      tblName="+tblName);
+					objbrowse.setMeta(val,tblName);
+					//this.title=tblName+"信息";
+					this.label=tblName+"信息";
+					objbrowse.setTitle(tblName+"信息");
+					objbrowse.setComp(this.comp);
+					objbrowse.setShowClass(null);
+					objbrowse.setMenuBarVisible(false);
+					objbrowse.setAddBtnVisible(false);
+					objbrowse.setLabelWidth(labelWidth);
+				
+			 	}catch(e:Error){
+			 		Alert.show("obj browse : "+e.getStackTrace());
+			 	}
+            	
+            }
+            
+            
+            public function setCondition(tblName:String,condition:String):void{
+			 	try{
+	            	var objbrowse:SingleObjectView=new SingleObjectView();
+	            	objbrowse.setHiddenLs(this.hiddenLs);
+	            	objbrowse.setAddfun(this.addfun);
+					objbrowse.setEditfun(this.editfun);
+					objbrowse.setDelfun(this.delfun);
+					
+	            	this.addChild(objbrowse);
+	            	this.minWidth=300;
+	            	this.minHeight=400;
+	            	this.maxHeight=Application.application.screen.height-100;
+	            	this.maxWidth=Application.application.screen.width/2;
+					
+					objbrowse.setTitle(tblName);
+					this.title=tblName;
+					
+					objbrowse.setComp(this.comp);
+					objbrowse.setShowClass(null);
+					objbrowse.setMenuBarVisible(false);
+					objbrowse.setAddBtnVisible(false);
+					objbrowse.setLabelWidth(90);
+					objbrowse.setCondition(tblName,condition);
+				
+			 	}catch(e:Error){
+			 		Alert.show("obj browse : "+e.getStackTrace());
+			 	}
+            	
+            }
+		]]>
+	</mx:Script>
+</mx:TitleWindow>

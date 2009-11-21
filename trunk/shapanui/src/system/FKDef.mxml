@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" xmlns:list="view.list.*" 
+	xmlns:system="system.*">
+	<mx:Script>
+		<![CDATA[
+			import event.list.ListClickEnent;
+			import com.ResultFilter;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.http.mxml.HTTPService;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import view.selWin.ObjSelWindow;
+			import view.list.ListView;
+			public var tblName=null;
+			private var listview:ListView=null;
+			private var newObj:Object=null;
+			public var ldxml:XML=null;
+			private var selObj:Object=null;
+			public function setCondition(condition:String):void{
+				if(null==ldxml){
+					getTmpl();
+				}
+				if(null==listview){
+					listview=new ListView();
+					listview.addEventListener(ListClickEnent.rowClick,setSelObj,false,0,false);
+					listview.percentHeight=100;
+					lsp.addChild(listview);
+				}
+				
+				listview.tbName="参考列定义";
+				listview.setCondition(condition);
+				
+			}
+			
+			private var fkedit:FKEdit=null;
+			private function setSelObj(e:ListClickEnent):void{
+				
+				this.selObj=e.obj;
+				if(null==this.selObj){
+					//
+					fkeditp.removeAllChildren();
+					return ;
+				}
+				if(null==fkedit){
+					fkedit=new FKEdit();
+					fkedit.percentHeight=80;
+					fkedit.percentWidth=90;
+					fkeditp.addChild(fkedit);
+				}
+				var arr:Array=fkeditp.getChildren();
+				if(arr.length<1){
+					fkeditp.addChild(fkedit);
+				}
+				fkedit.setMeta(e.obj);
+				
+			}
+			
+			private function getTmpl():void{
+				var xml:XML=<DATAPACKET/>;
+				xml.@ACTION="detail";
+				xml.@TABLE="参考列定义";
+				//xml.@ID=this.keyVal;
+				
+				var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getCDSActionUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				dataService.send(xml);
+			}
+			protected function onXMLResult(e:ResultEvent):void{
+				
+				var tmpdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(tmpdoc))return;
+				//如果没有记录，加一条空记录，用于显示
+				//Alert.show(tmpdoc.toXMLString());
+				this.ldxml=tmpdoc;
+			}
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("连接服务器错误！");
+			}
+			private function openwin():void{
+				var selWin:ColSelWindow =ColSelWindow(PopUpManager.createPopUp(this, ColSelWindow, false));
+				selWin.title=this.tblName;
+				selWin.setParentBox(this);
+				selWin.setMeta(this.tblName);
+				var point2:Point = new Point();
+				point2=addbtn.localToGlobal(point2);
+				selWin.x=point2.x+15;
+                selWin.y=point2.y+5;
+			}
+			public function addObj(obj:Object):void{
+				//Alert.show(obj["NAME"]);
+				//如果存在，什么不操作，如果不存在，加入数据库，同时展现出来。
+				//Alert.show("boolean="+groupList.existByKey(obj["ID"]));
+				
+				this.newObj=obj;
+				if(null!=obj){
+					if(!listview.existByKey(obj["ID"])){
+						var xml:XML=this.ldxml.copy();
+						var rows:XMLList=xml.TABLEDATA.ROWDATA.ROW;
+						var tables:XMLList=xml.TABLEDATA;
+						
+						if(tables.length()<1){
+							var node:XML=<TABLEDATA>
+											<ROWDATA>
+												<ROW/>
+											</ROWDATA>
+										 </TABLEDATA>;
+										 xml.appendChild(node);
+						}
+						
+						if(rows.length()<1){
+							var rowsElt:XML=xml.TABLEDATA.ROWDATA[0];
+							rowsElt.appendChild(<ROW/>);
+							
+						}
+						
+						xml.@ACTION="add";
+						xml.@TABLE="参考列定义";
+						var tblElt:XML=xml.METADATA.TABLE[0];
+						tblElt.@NAME="参考列定义";
+						var rowElt:XML=xml.TABLEDATA.ROWDATA.ROW[0];
+						rowElt.@TABLE_NAME=this.tblName;
+						rowElt.@COLUM=obj["NAME"];
+						//rowElt.@REMARK=obj["REMARK"];
+						var dataService:HTTPService = new HTTPService();
+						dataService.url = UrlService.getCDSActionUrl();
+						dataService.contentType="application/xml";     
+						dataService.method="POST";
+						dataService.resultFormat = "e4x";
+						dataService.showBusyCursor=true;
+						dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+						dataService.addEventListener(ResultEvent.RESULT, onAddDataResult);
+						dataService.send(xml);
+						//Alert.show(xml.toXMLString());
+						//groupList.addObj(obj);
+					}else{
+						Alert.show("添加的成员已经存在！");
+					}	
+				}
+				
+			}
+			private function onAddDataResult(e:ResultEvent):void{
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				
+				var id:String=data.@ID;
+				this.newObj["ID"]=id;
+				//listview.addObj(this.newObj);
+				listview.freshList();
+				this.newObj=null;
+				freshid.enabled=true;
+			}
+			
+			private function delAction():void{
+				if(null==this.selObj){
+					Alert.show("请选择要删除的项！");
+					return;
+				}
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="del";
+				doc.@ID=this.selObj["ID"];
+				doc.@TABLE="参考列定义";
+				doc.@["KEYNAME"]="ID";
+				var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getCDSActionUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onDelDataResult);
+				dataService.send(doc);
+			}
+			private function onDelDataResult(e:ResultEvent):void{
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				listview.freshList();
+				this.selObj=null;
+				freshid.enabled=true;
+			}
+			private function fkFresh():void{
+				var xml:XML=<DATAPACKET/>;
+				xml.@ACTION="table_fk_fresh";
+				xml.@TABLE=this.tblName;
+				var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getSystemDefUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onTableFreshResult);
+				dataService.send(xml);
+				
+				freshid.enabled=false;
+			}
+			
+			private function onTableFreshResult(e:ResultEvent):void{
+			
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				
+				//
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:HBox>
+		<mx:Button label="添加" id="addbtn" click="openwin();"/>
+		<mx:Button label="删除" click="delAction();"/>
+		<mx:Button label="继承父表属性" click="fkFresh();" enabled="false" id="freshid" />
+	</mx:HBox>
+	<mx:HBox height="90%" width="100%">
+		<mx:Box id="lsp" width="30%" height="100%">
+		
+		</mx:Box>
+		<mx:Box id="fkeditp" width="70%" height="100%">
+			
+		</mx:Box>
+	</mx:HBox>
+	
+	
+	
+</mx:Box>
