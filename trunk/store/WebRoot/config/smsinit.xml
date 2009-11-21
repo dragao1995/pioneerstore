@@ -1,0 +1,4 @@
+<sms>
+	<sendurl>http://localhost:8899/tcxhApp/PioneerSMSAction</sendurl>
+	<fullurl>http://localhost:8899/tcxhApp/cardFullAction</fullurl>
+</sms>

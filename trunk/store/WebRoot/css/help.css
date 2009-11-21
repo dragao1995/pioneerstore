@@ -1,0 +1,43 @@
+  body {
+            color: #000000;
+            background-color: #DED6FC;
+            font-family: 宋体,verdana,sans-serif;
+            font-size: 16px;
+        }
+
+        A:link {
+            color: #000000;
+        }
+
+        A:visited {
+            color: #435A04;
+        }
+
+        td {
+            color: #000000;
+            font-family: 宋体,verdana,sans-serif;
+            font-size: 16px;
+        }
+
+        .code {
+            color: #000000;
+            font-family: 宋体,verdana,sans-serif;
+            font-size: 16px;
+        }
+        body {
+			font-size: 13px;
+			
+			width:100%;
+			font-family: 宋体,verdana,sans-serif;
+			line-height: 24px;
+			color: #03101C;
+			margin-left: 0px;
+			margin-top: 0px;
+			margin-right: 0px;
+			margin-bottom: 0px;
+		
+			size: auto;
+			SCROLLING
+			=No;
+			
+		}
