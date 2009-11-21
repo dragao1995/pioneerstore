@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+
+	applicationComplete="init();" 
+	>
+	<mx:Script>
+		<![CDATA[
+			import view.selWin.ObjEditWindow;
+			import view.selWin.OneObjSelWindow;
+			import view.selWin.ObjWindow;
+			import view.selWin.ObjectAddWindow;
+			import mx.managers.PopUpManager;
+			import view.object.ObjectAddView;
+			private function detail():void{
+				var selWin:ObjWindow =ObjWindow(PopUpManager.createPopUp(this, ObjWindow, true));
+				
+				//selWin.setCondition("及时信息",null);
+				selWin.setCondition("分公司","ID=1");
+				
+				selWin.showCloseButton=true;
+				
+				selWin.x=(Application.application.screen.width-selWin.width)/2;
+                selWin.y=(Application.application.screen.height-selWin.height)/2;
+			}
+			
+			private function addWin():void{
+				var selWin:ObjectAddWindow=ObjectAddWindow(PopUpManager.createPopUp(this, ObjectAddWindow, true));
+				var dvalue:Array=new Array();
+				
+					var objx:Object=new Object();
+					objx.NAME="X";
+					objx.VALUE="100";
+					     
+					dvalue.push(objx);
+					var objy:Object=new Object();
+					objy.NAME="Y";
+					objy.VALUE="200";
+					dvalue.push(objy);
+				selWin.setDefaultValues(dvalue);
+				selWin.showCloseButton=true;
+				selWin.setCondition("分公司",null);
+				selWin.x=(Application.application.screen.width-selWin.width)/2;
+                selWin.y=(Application.application.screen.height-selWin.height)/2;
+			}
+			private function editWin():void{
+				var selWin:ObjEditWindow =ObjEditWindow(PopUpManager.createPopUp(this, ObjEditWindow, true));
+				
+				//selWin.setCondition("及时信息",null);
+				//selWin.setCondition("分公司","ID=1");
+				selWin.setTblKey("分公司","1");
+				selWin.showCloseButton=true;
+				
+				selWin.x=(Application.application.screen.width-selWin.width)/2;
+                selWin.y=(Application.application.screen.height-selWin.height)/2;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label text="DDDDDDD!!!!!!"/>
+	<mx:Button label="show detail" click="detail();"/>
+	<mx:Button label="add obj" click="addWin();"/>
+	<mx:Button label="edit obj" click="editWin();"/>
+</mx:Application>

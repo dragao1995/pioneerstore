@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HDividedBox xmlns:mx="http://www.adobe.com/2006/mxml"
+	
+	width="90%" 
+	height="100%">
+	<mx:Script>
+		<![CDATA[
+			import view.list.ListView;
+		import mx.controls.Alert;
+		import view.pioneer.shopDetail;
+		import view.object.ObjectView;
+		import event.list.ListClickEnent;
+		private var tblName:String=null;
+		private var compName:String=null;
+		private var condition:String=null;
+		private var goodchart:GoodChart=null;
+		
+		public function setMeta(tblName:String,compName:String,condition:String):void{
+			try{
+				this.tblName=tblName;
+				this.compName=compName;
+				this.condition=condition;
+				
+				init();	
+			}catch(e:Error){
+				
+			}
+			
+		}
+		private function init():void{
+			this.removeAllChildren();
+			var listview:ListView=new ListView();
+			listview.percentWidth=24;
+			listview.tbName=this.tblName;
+			listview.setCondition(this.condition);
+			listview.addEventListener(ListClickEnent.rowClick,showChart,false,0,false);
+			this.addChild(listview);
+			goodchart=new GoodChart();
+			goodchart.percentWidth=76;
+			this.addChild(goodchart);
+			
+			
+		}
+		
+		private function showChart(e:ListClickEnent):void{
+				try{
+					if(null==e.obj)return;
+					goodchart.setGoodCode(e.obj.CODE);
+				}catch(e:Error){
+					Alert.show(e.message);
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	
+</mx:HDividedBox>

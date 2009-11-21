@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical" width="500" height="400"
+	title="多用户选择"
+	close="PopUpManager.removePopUp(this);"
+	creationComplete="init();"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.events.ListEvent;
+			import mx.events.ItemClickEvent;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import event.list.ListClickEnent;
+			import view.list.ListView;
+			import mx.controls.Alert;
+			import component.TreeComp;
+			import event.tree.TreeEvent;
+			import view.tree.TreeView;
+			import mx.managers.PopUpManager;
+			
+			private var tblName:String=null;
+			private var treecomp:TreeComp=null;
+			
+			private var userlist:ListView=null;
+			private var parentObj:Object=null;
+			
+			public function setParentObj(obj:Object):void{
+				this.parentObj=obj;
+			}
+			private function init():void{
+				if(null==treecomp){
+					treecomp=new TreeComp();
+					treecomp.label="组织架构";
+					treecomp.percentWidth=100;
+					treecomp.percentHeight=100;
+					treecomp.setTblName(tblName);
+					treecomp.addEventListener(TreeEvent.TREE_SELECTED,COMPANYSelected);
+					companytree.addChild(treecomp);
+				}
+				if(null==this.userlist){
+					this.userlist=new ListView();
+					userlist.addEventListener(ListClickEnent.rowClick,setUser,false,0,false);
+					userlist.percentWidth=100;
+					userlist.percentHeight=100;
+					this.userlist.tbName="用户";
+					
+					userlistp.addChild(this.userlist);
+				}
+				var columsArray:Array=new Array();
+				var column1:DataGridColumn= new DataGridColumn();
+             	column1.dataField="NAME";
+				column1.headerText="名称";
+				
+				columsArray.push(column1);
+				this.usersgrid.columns=columsArray;
+			}
+			
+			public function setMeta(tablName:String):void{
+				this.tblName=tablName;
+				init();
+			}
+			private function COMPANYSelected(ee:TreeEvent){
+				var node:Object=ee.treeNode;
+				userlistp.title=node.name+"成员"
+				this.userlist.setCondition("COMPANY="+node.id);
+				
+			}
+			private var userls:Array=new Array();
+			private function setUser(e:ListClickEnent):void{
+				try{
+					if(null==e.key)return;
+					if(!this.isSelect(e.key)){
+						
+						this.userls.push(e.obj);
+						this.usersgrid.dataProvider=this.userls;
+					}
+					
+					
+				}catch(e:Error){
+					Alert.show(e.message);
+				}
+			}
+			private function isSelect(userId:String):Boolean{
+				var flg:Boolean=false;
+				//for each(var row:XML in rows){
+				for each(var obj:Object in this.userls){
+					var tId:String=obj.ID;
+					
+					if(tId==userId){
+						flg=true;
+						Alert.show("已被加入！");
+						break;
+					}
+				}
+				return flg;
+			}
+			
+			private function okSel():void{
+				if(null!=this.parentObj){
+					this.parentObj.processSel(this.userls);
+					if(this.userls.length<1){
+						Alert.show("还没有选择用户！");
+						return;
+					}
+					PopUpManager.removePopUp(this);
+				}
+			}
+			private function okAllSel():void{
+				if(null!=this.parentObj){
+					this.parentObj.processSel(null);
+					
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			private function delUser(e:ListEvent):void{
+				var obj:Object=usersgrid.selectedItem;
+				var newLs:Array=new Array();
+				for each(var tobj:Object in this.userls){
+					if(obj.ID!=tobj.ID){
+						newLs.push(tobj);
+					}
+				}
+				this.userls=newLs;
+				this.usersgrid.dataProvider=this.userls;
+				
+			}
+		]]>
+	</mx:Script>
+	<mx:HBox width="100%" height="100%" styleName="label">
+		<mx:Box id="companytree" width="40%" height="100%">
+		
+		</mx:Box>
+		<mx:Panel title="成员" id="userlistp" width="30%" height="100%">
+			
+		</mx:Panel>
+		<mx:Panel title="选中成员" id="selectusersp" width="30%" height="100%">
+			<mx:DataGrid id="usersgrid" itemClick="delUser(event);" width="100%" height="100%"/>
+		</mx:Panel>
+	</mx:HBox>
+	<mx:HBox height="30" width="100%" horizontalAlign="center">
+		
+		<mx:Button label="确定" styleName="okbtn" click="okSel();"/>
+		<mx:Button label="取消" click="PopUpManager.removePopUp(this);" styleName="delbtn"/>
+	</mx:HBox>
+</mx:TitleWindow>

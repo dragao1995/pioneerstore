@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" xmlns:list="view.list.*"
+	
+	xmlns:shop="shop.*">
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import event.list.ListClickEnent;
+			private function initTuiJian():void{
+				tuijian.clear();
+				tuijian.setMate("商品明细","ISTUIJIAN = '是'");
+			}
+			private function initNewLs():void{
+				newLs.clear();
+				newLs.setMate("商品明细","ISNEW = '是'");
+			}
+			
+			
+			
+			private function initChuXiao():void{
+				cxLs.clear();
+				cxLs.setMate("商品明细","ISCUXIAO = '是'");
+			}
+			private function searchGood():void{
+				var keyVal:String=this.objName.text;
+				if(null==keyVal || ""==keyVal || " "==keyVal){
+					Alert.show("请输入要搜索商品的名称！");
+					return;
+				}
+				searchLs.clear();
+				searchLs.setMate("商品明细","NAME  like '%"+keyVal+"%' or CODE='"+keyVal+"'");
+			}
+			private var goodShow:GoodShow=null;
+			private function showDetail(e:ListClickEnent):void{
+				var doc:XML=XML(e.obj);
+				var idStr:String=doc.@ID;
+				if(null==goodShow){
+					goodShow=new GoodShow();
+					goodshowp.removeAllChildren();
+					goodshowp.addChild(goodShow);
+				}
+				goodShow.setId(idStr);
+			}
+			
+			private function keySearch(e:KeyboardEvent):void{
+				if(13==e.keyCode){
+					searchGood();
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:HDividedBox width="100%" height="100%" horizontalGap="1">
+		<mx:Panel id="goodshowp" width="55%"  height="100%">
+			<mx:Image source="assets/16.jpg" width="100%" height="100%"/>
+		</mx:Panel>
+		<mx:HBox width="45%"  height="100%" horizontalGap="1">
+			<mx:VBox width="50%"  height="100%" horizontalGap="1">
+				<mx:Panel title="推荐商品" headerHeight="18" width="100%" height="50%" styleName="label">
+					<list:ObjectTitle rowClick="showDetail(event)" creationComplete="initTuiJian();" id="tuijian" width="100%" height="100%"/>
+				</mx:Panel>
+				<mx:Panel title="新品上架" headerHeight="18" width="100%" height="50%"  styleName="label">
+					<list:ObjectTitle rowClick="showDetail(event)" creationComplete="initNewLs();" id="newLs" width="100%" height="100%"/>
+				</mx:Panel>
+			</mx:VBox>
+			<mx:VBox width="50%"  height="100%" horizontalGap="1">
+				<mx:Panel title="促销商品" headerHeight="18" width="100%" height="50%"  styleName="label">
+					<list:ObjectTitle rowClick="showDetail(event)" creationComplete="initChuXiao();" id="cxLs" width="100%" height="100%"/>
+				</mx:Panel>
+				<mx:Panel title="搜索商品" headerHeight="18" width="100%" height="50%"  styleName="label">
+					<mx:HBox width="100%" height="23">
+						<mx:Label text="名称/编号:"/>
+						<mx:TextInput id="objName" name="objName" width="60" height="22" keyUp="keySearch(event);"/>
+						<mx:Button label="搜索" click="searchGood();" width="40" styleName="searchbtn" height="22"/>
+					</mx:HBox>
+					<mx:HRule width="100%"/>
+					<mx:Box width="100%" height="100%">
+						<list:ObjectTitle rowClick="showDetail(event)"  id="searchLs" width="100%" height="100%"/>
+					</mx:Box>
+				</mx:Panel>
+			</mx:VBox>
+			
+		</mx:HBox>
+	</mx:HDividedBox>
+</mx:Box>

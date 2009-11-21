@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<DATAPACKET>
+  <METADATA>
+    <TABLE LOADCONDITION="" MAXROW="500" NAME="tc_shop">
+      <KEYS>
+        <KEY NAME="ID"/>
+      </KEYS>
+      <FIELD DP="0" NAME="ID" TYPE="int" SIZE="11" REMARK="编号"/>
+      <FIELD DP="1" NAME="NAME" TYPE="varchar" SIZE="600" REMARK="名称"/>
+      <FIELD DP="0" NAME="USER_ID" TYPE="int" SIZE="11" REMARK="店主"/>
+      <FIELD DP="1" NAME="USER_NUMBER" TYPE="int" SIZE="11" REMARK="人员"/>
+      <FIELD DP="0" NAME="CAPITAL" TYPE="int" SIZE="11" REMARK="资本"/>
+      <FIELD DP="0" NAME="SHOP_REGIST_TIME" TYPE="varchar" SIZE="18" REMARK="开店时间"/>
+      <FIELD DP="0" NAME="NET_SHOP_REGIST_TIME" TYPE="varchar" SIZE="18" REMARK="网上开店时间"/>
+      <FIELD DP="0" NAME="TYPE_ID" TYPE="int" SIZE="11" REMARK="商店类型"/>
+      <FIELD DP="0" NAME="LEVEL" TYPE="int" SIZE="11" REMARK="级别"/>
+      <FIELD DP="0" NAME="GRADE" TYPE="int" SIZE="11" REMARK="积分"/>
+      <FIELD DP="0" NAME="STREET_ID" TYPE="int" SIZE="11" REMARK="所在街道"/>
+      <FIELD DP="0" NAME="x" TYPE="double" SIZE="22" REMARK="经度"/>
+      <FIELD DP="0" NAME="y" TYPE="double" SIZE="22" REMARK="维度"/>
+      <FIELD DP="0" NAME="logo" TYPE="varchar" SIZE="300" REMARK="商店图标"/>
+      <TABLE NAME="tc_shop_good">
+        <KEYS/>
+        <FIELD ISFK="true" NAME="shop_id" TYPE="int" SIZE="11" REMARK=""/>
+        <FIELD NAME="good_id" TYPE="int" SIZE="11" REMARK=""/>
+        <FIELD NAME="price" TYPE="float" SIZE="12" REMARK=""/>
+        <FIELD NAME="number" TYPE="int" SIZE="11" REMARK=""/>
+        <FIELD NAME="store_number" TYPE="int" SIZE="11" REMARK=""/>
+      </TABLE>
+    </TABLE>
+  </METADATA>
+  <TABLEDATA>
+    <ROWDATA>
+      <ROW ID="4" NAME="ceshi" TYPE_ID="1"/>
+      <ROW ID="5" NAME="测试" TYPE_ID="1"/>
+      <ROW ID="6" NAME="ceshi2" TYPE_ID="1"/>
+      <ROW ID="7" NAME="ceshi3" TYPE_ID="1"/>
+      <ROW ID="8" NAME="ceshi4" TYPE_ID="1"/>
+      <ROW ID="9" NAME="ceshi5" TYPE_ID="1"/>
+      <ROW ID="10" NAME="ceshi6" TYPE_ID="1"/>
+      <ROW ID="11" NAME="ceshi7" TYPE_ID="1"/>
+      <ROW ID="12" NAME="ceshi8" TYPE_ID="1"/>
+      <ROW ID="13" NAME="ceshi9" TYPE_ID="1"/>
+      <ROW ID="14" NAME="ceshi10" TYPE_ID="1"/>
+      <ROW ID="15" NAME="ceshi11" TYPE_ID="1"/>
+      <ROW ID="16" NAME="ceshi12" TYPE_ID="1"/>
+      <ROW ID="17" NAME="ceshi13" TYPE_ID="1"/>
+      <ROW ID="18" NAME="ceshi14" TYPE_ID="1"/>
+      <ROW ID="19" NAME="ceshi15" TYPE_ID="1"/>
+      <ROW ID="20" NAME="ceshi16" TYPE_ID="1"/>
+      <ROW ID="21" NAME="ceshi17" TYPE_ID="1"/>
+      
+    </ROWDATA>
+  </TABLEDATA>
+
+  
+</DATAPACKET>

@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"
+	creationComplete="init();"
+	 xmlns:view="view.*"
+	 horizontalGap="0"
+	 verticalGap="0"
+	 >
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import com.pioneer.http.UrlService;
+			import mx.controls.Alert;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+		
+			import mx.rpc.http.mxml.HTTPService;
+			
+			private var doc:XML=null;
+			private var urlStr:String="communityResource.xml";
+			private function init():void{
+				try{
+					
+					goodcodeid.setFocus();
+					zhibiaoid.selectedIndex=0;
+					chartp.setChartIndex(0);
+					chartp.setTblName("商品");
+					//getDate();
+					var now:Date=new Date();
+					var year:int=now.getFullYear();
+					var m:int=now.getMonth();
+					m++;
+					var mstr:String="";
+					if(m<10)
+					mstr="0"+m;
+					else
+					mstr=""+m;
+					
+					var day:int=now.getDate();
+					var dayStr:String="";
+					if(day<10){
+						dayStr="0"+day;
+					}else{
+						dayStr=""+day;
+					}
+					var dateStr:String=year+ mstr+dayStr;
+					if(m<=1){
+						m=12;
+						year--;
+					}else{
+						m--;
+						
+					}
+					
+					var smstr:String=""+year;
+					if(m<10){
+						smstr+="0"+m;
+					}else{
+						smstr+=m;
+					}
+					
+					if(day<10){
+						smstr+="0"+day;
+					}else{
+						smstr+=day;
+					}
+					this.enddate.text=dateStr;
+					this.startdate.text=smstr;
+				}catch(e:Error){
+					
+				}
+				
+			}
+			
+			private function getDate():void{
+				try{
+					var charthttpData:HTTPService=new HTTPService();
+					charthttpData.url=this.urlStr;
+		            charthttpData.resultFormat="e4x";
+		            charthttpData.method = "POST";
+		            charthttpData.addEventListener("result", userData);
+		            charthttpData.addEventListener("fault", httpFault);
+		            charthttpData.send(null);	
+				}catch(e:Error){
+					
+				}
+				
+			}
+			private function userData(event:ResultEvent):void{
+				try{
+					var xml:XML = (XML)(event.result);
+					chartp.buildChart(xml);
+					//var xml:XML = (XML)(event.result);
+					
+				
+				
+				}catch(e:Error){
+					Alert.show("copy error");
+				}
+			}
+			 private function httpFault(event:FaultEvent):void {
+                var faultstring:String = event.fault.faultString;
+                Alert.show("网络错误，请重试！");
+            }
+            
+            private function addCheck():void{
+            	
+            	if(addcheckid.selected){
+            		startdate.enabled=false;
+            		enddate.enabled=false;
+            		zhibiaoid.enabled=false;
+            	}else{
+            		
+            		startdate.enabled=true;
+            		enddate.enabled=true;
+            		zhibiaoid.enabled=true;
+            	}
+            	
+            	goodcodeid.setFocus();
+            }
+            
+            private function searchAction(evt:KeyboardEvent):void{
+            	if(evt.keyCode==13){
+            		remoteQ();
+            	}
+            }
+            public function setGoodCode(code:String):void{
+            	this.goodcodeid.text=code;
+            	remoteQ();
+            }
+            private function remoteQ():void{
+            	if(null==this.goodcodeid.text){
+            		return;
+            	}
+            	var doc:XML=<DATAPACKET/>;
+            	doc.@ACTION="chart";
+            	doc.@TABLENAME="t_sale_list";
+            	doc.@KEYNAME="saledate";
+            	doc.@WHERE="code='"+goodcodeid.text+"' and saledate>="+startdate.text+" and saledate<="+enddate.text+" order by saledate"
+            	doc.@CODE=goodcodeid.text;
+            	doc.@PARAMETER=zhibiaoid.selectedItem.code;
+            	doc.@STARTDATE=startdate.text;
+            	doc.@ENDDATE=enddate.text;
+            	if("yingli"==zhibiaoid.selectedItem.code){
+            		doc.@VALUEFUN="(outprice-inprice)*saleNumber as yingli";
+            	}else{
+            		doc.@VALUEFUN=zhibiaoid.selectedItem.code;
+            	}
+            	var nameElt:XML=<name/>
+            	nameElt.@SQL="select name from t_good where code='"+goodcodeid.text+"'";
+            	doc.appendChild(nameElt);
+            	var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getGoodCDSURL();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, httpFault);
+				dataService.addEventListener(ResultEvent.RESULT, doChartData);
+				dataService.send(doc);
+				goodcodeid.selectionBeginIndex=0;
+				goodcodeid.selectionEndIndex=goodcodeid.text.length;
+	            
+            }
+            
+            private function doChartData(event:ResultEvent):void{
+            	try{
+            		var xml:XML = (XML)(event.result);
+            	
+	            	if(addcheckid.selected){
+	            		if(null==doc){
+	            			this.doc=xml;
+	            			chartp.buildChart(xml);
+	            		}else{
+	            			var newRow:XML=xml.datas.data[0];
+	            			var rows:XML=this.doc.datas[0];
+	            			if(null!=rows){
+	            				rows.appendChild(newRow)
+	            			}
+	            			var nmcs:XMLList=xml.meate.mc;
+	            			var omcelt:XML=this.doc.meate[0];
+	            			for each( var mc:XML in nmcs){
+	            				var code:String=mc.@code;
+	            				var elts:XMLList=this.doc.meate.mc.(@code == code);
+	            				if(elts.length()<1){
+	            					omcelt.appendChild(mc);
+	            				}
+	            			}
+	            			chartp.buildChart(this.doc);
+	            		}
+	            		
+	            	}else{
+	            		this.doc=xml;
+	            		chartp.buildChart(xml);
+	            	}
+            	}catch(e:Error){
+            		Alert.show(e.getStackTrace());
+            	}
+            	
+            }
+            private function zhibiaocg():void{
+            	//goodcodeid.text="";
+            	goodcodeid.setFocus();
+            	if(!addcheckid.selected){
+            		this.doc=null;
+            	}
+            	this.remoteQ();
+            }
+		]]>
+	</mx:Script>
+	<mx:Array id="arr">
+	        <mx:Object label="销售量" code="saleNumber"/>
+	        <mx:Object label="盈利" code="yingli"/>
+	        <mx:Object label="价格" code="outprice"/>
+	    </mx:Array>
+		<mx:ApplicationControlBar width="100%" height="39" barColor="#e0" alpha="1.9">
+			<mx:Label text="开始时间：" styleName="label"/>
+			<mx:DateField id="startdate" editable="true" formatString="YYYYMMDD" text=""  styleName="textInput" dayNames="['日','一','二','三','四','五','六']" monthNames="['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']"/>
+			<mx:Label text="结束时间：" styleName="label"/>
+			<mx:DateField id="enddate" editable="true" formatString="YYYYMMDD" styleName="textInput" dayNames="['日','一','二','三','四','五','六']" monthNames="['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']"/> 
+			<mx:Label text="编码：" styleName="label"/>
+			<mx:TextInput id="goodcodeid" width="120" keyUp="searchAction(event)" styleName="textInput"/>
+			<mx:Label text="指标：" styleName="label"/>
+			<mx:ComboBox id="zhibiaoid" change="zhibiaocg();" dataProvider="{arr}" styleName="label"/>
+			<mx:CheckBox label="叠加：" id="addcheckid" click="addCheck();"  styleName="label"/>
+		</mx:ApplicationControlBar>
+
+	<view:ChartComp id="chartp" width="100%"/>
+</mx:Box>

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml"  width="100%" height="100%">
+	
+	<mx:Metadata>
+    	[Event(name="treeSelect",type="event.tree.TreeEvent",bubbles="false",cancelable="true")]
+	</mx:Metadata>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+		import event.tree.TreeEvent;
+		import com.pioneer.http.UrlService;
+		//import classes.appService;
+		import mx.events.StateChangeEvent;
+		import mx.events.EffectEvent;
+		import mx.events.CollectionEvent;
+		import mx.events.FlexEvent;
+		import mx.events.ItemClickEvent;
+		import mx.rpc.events.ResultEvent;
+        import mx.rpc.events.FaultEvent;
+       // import event.good.ZoneEvent;
+		import mx.collections.XMLListCollection;
+		import mx.controls.menuClasses.MenuBarItem;
+		import mx.controls.Alert;
+		import mx.controls.CheckBox;
+        import mx.rpc.http.HTTPService;
+        
+		import flash.xml.XMLNode;
+		import flash.xml.XMLNodeType ;
+		
+					
+			//private var urlStr:String="http://127.0.0.1:8899/tcxhApp/zone.do";
+			public static var REQ_ALL:String="all";
+			public static var REQ_ROOT:String="root";
+			private var urlStr:String=UrlService.getTreeUrl();
+			private var useFlag:CheckBox=null;
+			private var tblName:String=null;
+			private var req_type:String=null;
+			private var doc:XML=null;
+			private var rootId:String=null;
+			public function setTblName(tblName:String):void{
+				this.tblName=tblName;
+				initComp();
+			}
+			public function setRootId(rootId:String):void{
+				this.rootId=rootId;
+				
+			}
+			private function initComp():void{
+				
+				var pars:Object=new Object();
+				pars.req_type="all";
+				pars.tblName=this.tblName;
+				pars.rootId=this.rootId;
+				//Alert.show(pars.tblName);
+				getMainMenuInfo(pars);
+				
+			}
+			
+			private function getMainMenuInfo(parameters:Object):void {
+                
+                typeTreeData.url=urlStr;
+                
+                typeTreeData.resultFormat="e4x";
+                typeTreeData.method = "POST";
+                typeTreeData.addEventListener("result", buildMenu);
+                typeTreeData.addEventListener("fault", httpFault);
+                
+                typeTreeData.send(parameters);
+            }
+
+            private function buildMenu(event:ResultEvent):void {
+                var xml:XML = (XML)(event.result);
+                this.doc=xml;
+            	var menus:XMLList=xml.DATAPACKET.ROWDATA.ROW;
+            	coreTree.dataProvider=menus;
+            	coreTree.labelField="@NAME";
+            	coreTree.id="@ID";
+            	coreTree.name="@ID";
+            	//var obj:DisplayObject=coreTree.getChildAt(0);
+            	
+            	  var ee:TreeEvent = new  TreeEvent(null);
+	                dispatchEvent(ee);   	
+            }
+
+            private function httpFault(event:FaultEvent):void {
+                var faultstring:String = event.fault.faultString;
+                Alert.show("网络连接错误，请重试！");
+            }
+            
+            private function selectNode(e:Event):void{
+                 var mytree:Tree=Tree(e.currentTarget);
+                 var id:String=e.currentTarget.selectedItem.@ID;
+                 var name=e.currentTarget.selectedItem.@NAME;
+                 var pid=e.currentTarget.selectedItem.@PID;
+                 var node:Object=new Object();
+                 node.name=name;
+                 node.id=id;
+                 node.pid=pid;
+                var item:XML= mytree.selectedItem as XML
+                if(item.children().length()>0){
+                	node.hasChild=true;
+//                	Alert.show("有子节点。");
+                }else{
+                	node.hasChild=false;
+                }
+                 var ee:TreeEvent = new  TreeEvent(node);
+	                dispatchEvent(ee);
+            }
+			//删除当前选中的节点。
+			public function delRow(isStr:String):void{
+				
+			var node:XML=coreTree.selectedItem as XML;
+			if(null==node){
+				var rowList:XMLList=this.doc.DATAPACKET.ROWDATA.ROW;
+				var num:int=rowList.length();
+				//Alert.show("num="+num);
+				for(var ii:int=0;ii<num;ii++){
+					var row:XML=this.doc.DATAPACKET.ROWDATA.ROW[ii];
+					if(row.@ID==isStr){
+						delete this.doc.DATAPACKET.ROWDATA.ROW[ii];
+						break;
+					}
+				}
+			}else{
+				var pnode:XML=node.parent() as XML;
+				for(var i:uint;i<pnode.child("ROW").length();i++){    
+			         if(pnode.child("ROW")[i]==node){
+				     	delete pnode.children()[i]; 
+				      }    
+				}
+			}
+			
+			}
+//			添加一个兄弟节点
+			public function addRow(node:XML):void{
+				var treenode:XML=coreTree.selectedItem as XML;
+				if(null==treenode){
+					var rowsElt:XML=this.doc.DATAPACKET.ROWDATA[0];
+					rowsElt.appendChild(node);
+				}else{
+					var pnode:XML=treenode.parent() as XML;
+					pnode.appendChild(node);
+				}
+				
+			}
+//			添加一个子节点。
+			public function addCRow(node:XML):void{
+				var treenode:XML=coreTree.selectedItem as XML;
+				if(null==treenode)return;
+				treenode.appendChild(node);
+				
+			}
+			public function editRow(row:XML):void{
+				var treenode:XML=coreTree.selectedItem as XML;
+				if(null==treenode)return;
+				//Alert.show(treenode.toXMLString());
+				treenode.@NAME=row.@NAME;
+				treenode.@REMARK=row.@REMARK;
+			}
+		]]>
+	</mx:Script>
+	<mx:HTTPService id="typeTreeData"  showBusyCursor="true">
+
+	</mx:HTTPService>
+	<mx:Panel id="parentBox" width="100%" height="100%">
+		<!--
+		<mx:Tree id="coreTree" click="selectNode(event)" itemRenderer="com.tree.TreeCheckBoxRenderer" styleName="tree" width="100%" height="100%"/>
+		-->
+		<mx:Tree id="coreTree" editable="false" itemClick="selectNode(event)"  styleName="tree" width="100%" height="100%" alpha="1"/>
+	</mx:Panel>
+</mx:Box>

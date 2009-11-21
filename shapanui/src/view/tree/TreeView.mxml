@@ -1,0 +1,668 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+	<mx:Style source="../../style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import com.ResultFilter;
+			import component.TreeComp;
+			import view.tree.TreePanal;
+			import adobe.utils.XMLUI;
+			import mx.events.IndexChangedEvent;
+			import mx.messaging.management.Attribute;
+			import component.FileUpload;
+			import mx.controls.DateField;
+			import view.list.ListView;
+			import mx.core.Application;
+			import mx.controls.TextInput;
+			import com.pioneer.http.UrlService;
+			import mx.managers.SystemManager;
+			import mx.utils.XMLUtil;
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+		
+			import mx.rpc.http.mxml.HTTPService;
+			
+			private var keyVal:String=null;
+			private var tblName:String=null;
+			private var panelBuild:TreePanal=null;
+			private var objdoc:XML=null;//访问的数据，描述文件。
+			private var newDoc:XML=null;//添加对象的doc；
+			private var treeview:TreeComp=null;
+			private var comp:String=null;//显示数据所属得模块。
+			private var dataEnable:Boolean=true;
+			private var newIsChild:Boolean=false;
+			public function setComp(comp:String):void{
+				this.comp=comp;
+			}
+			public function setListView(view:TreeComp):void{
+				this.treeview=view;
+			}
+			//设置查找学习的表，关键字
+			
+			public function setMeta(node:Object,tblName:String):void{
+				
+				if(null!=node)
+					this.keyVal=node.id;
+				this.tblName=tblName;
+				try{
+					if(this.dataEnable){
+						gateData();
+					}
+				}catch(e:Error){
+//					系统取数据错误，请与系统维护人员联系！
+					Alert.show("系统取数据错误，请与系统维护人员联系！"+e.message);
+				}
+				if(null!=node){
+					if(node.hasChild){
+						delbtn_id.enabled=false;
+					}else{
+						delbtn_id.enabled=true;
+					}
+					addcbtn_id.enabled=true;
+					editbtn_id.enabled=true;
+				}else{
+					//除了新加按钮，都为false
+					addcbtn_id.enabled=false;
+					editbtn_id.enabled=false;
+					delbtn_id.enabled=false;
+				}
+				
+			}
+//			组织请求文档，发送明细请求
+			private function gateData():void{
+				//if(null==this.keyVal)return;
+				var tmpxml:XML=XML(detailReq);
+				tmpxml.@TABLE=this.tblName;
+				tmpxml.@ID=this.keyVal;
+				
+				//Alert.show(tmpxml.toXMLString());
+				
+				var tmplService:HTTPService = new HTTPService();
+				//tmplService.url = "mode/data/detaildoc.xml";
+				tmplService.url = UrlService.getDetailUrl();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				tmplService.send(tmpxml);
+			}
+//			请求失败
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("连接服务器错误！");
+			}
+			
+			// 明细请求成功！
+			protected function onXMLResult(e:ResultEvent):void{
+				
+				var tmpdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(tmpdoc))return;
+				/////////
+				var tblElt=tmpdoc.TABLEDATA[0];
+				if(null==tblElt){
+					try{
+						var xmlnode:XML=<TABLEDATA><ROWDATA/></TABLEDATA>;
+						tmpdoc.appendChild(xmlnode);
+					}catch(e:Error){
+						Alert.show(e.getStackTrace());
+					}
+				}
+				var rows:XMLList=tmpdoc.TABLEDATA.ROWDATA.ROW;
+				
+				if(rows.length()<1){
+					var rowsElt:XML=tmpdoc.TABLEDATA.ROWDATA[0];
+					rowsElt.appendChild(<ROW/>);
+					this.keyVal=null;
+				}
+				////////
+				objdoc=tmpdoc;
+				buildShowPage(tmpdoc);
+			}
+//			设置这样渲染方法。
+			public function setShowClass(panelBuild:TreePanal):void{
+				this.panelBuild=panelBuild;
+			}
+//			组织显示数据。
+			private function buildShowPage(doc:XML):void{
+				if(doc){
+					//Alert.show(doc.toXMLString());
+					if(null==this.panelBuild){
+						this.panelBuild=new TreePanal();
+					}
+					this.panelBuild.clear();
+					this.panelBuild.setComp(comp);
+					this.panelBuild.setDoc(doc);
+					var row:XML=this.getDetailById(doc);
+					var mate=this.getMeta(doc);
+					//Alert.show(row.toXMLString())
+					//遍历要显示的字段
+					for each( var col:XML in mate){
+							var val='';
+							try{
+								val=XMLUtil.getAttributeByQName(row,new QName(col.@NAME));	
+							}catch(e:Error){
+								
+							}
+							//Alert.show("val="+val);
+//							panelBuild.addField(col,val);
+							panelBuild.addField2Array(col,val);
+						
+					}
+					detailpanel.removeAllChildren();
+//					panelBuild.getPanel() 是返回渲染方法的结果。
+					if(null==this.keyVal){
+						
+					}else{
+						detailpanel.addChild(panelBuild.getDetailPanel());
+					}
+					
+					//System.setClipboard("this is a flash copy.");
+					btns.visible=true;
+				}
+			}
+			
+			private function rebuildShowPage(doc:XML):void{
+				if(doc){
+					//Alert.show(doc.toXMLString());
+					if(null==this.panelBuild){
+						this.panelBuild=new TreePanal();
+					}
+					this.panelBuild.clear();
+					this.panelBuild.setComp(comp);
+					this.panelBuild.setDoc(doc);
+					var row:XML=this.getDetailById(doc);
+					var mate=this.getMeta(doc);
+					//遍历要显示的字段
+					for each( var col:XML in mate){
+							var val='';
+							try{
+								val=XMLUtil.getAttributeByQName(row,new QName(col.@NAME));	
+							}catch(e:Error){
+								
+							}
+							
+//							panelBuild.addField(col,val);
+							panelBuild.addField2Array(col,val);
+						
+					}
+					detailpanel.removeAllChildren();
+//					panelBuild.getPanel() 是返回渲染方法的结果。
+					detailpanel.addChild(panelBuild.getDetailPanel());
+					//System.setClipboard("this is a flash copy.");
+					btns.visible=true;
+				}
+			}
+			private function getMeta(doc:XML):XMLList{
+				var mate:XMLList=doc.METADATA.TABLE.FIELD;
+				return mate;
+			}
+			//根据id取信息
+			private function getDetailById(doc:XML):XML{
+				if(null!=doc){
+					var rt:XML=null;
+					try{
+						var key:String=this.objdoc.METADATA.TABLE.KEYS.KEY.@NAME;
+						var datarows:XMLList=doc.TABLEDATA.ROWDATA.ROW;
+						//for each(var col:XML in mcrows){
+						for each( var data:XML in datarows){
+							if( data.@[key]==this.keyVal){
+								rt=data;
+								break;
+							}
+						}
+					}catch(e:Error){
+												
+					}
+				}
+				return rt;
+			}
+			private function newAction():void{
+				
+				if("新增节点"==addbtn_id.label){
+					newIsChild=false;
+					addbtn_id.label="保存";
+					editbtn_id.enabled=false;
+					addcbtn_id.enabled=false;
+					//delbtn_id.enabled=false;
+					delbtn_id.label="放弃";
+					detailpanel.removeAllChildren();
+					detailpanel.addChild(panelBuild.getAddPanel());
+					this.dataEnable=false;
+					delbtn_id.enabled=true;
+				}else{
+					saveNewFun();
+					addbtn_id.label="新增节点";
+					addcbtn_id.enabled=true;
+					editbtn_id.enabled=true;
+					//detailbtn_id.enabled=true;
+					delbtn_id.enabled=true;
+					delbtn_id.label="删除";
+					this.dataEnable=true;
+					if(null==this.keyVal){
+						delbtn_id.enabled=false;
+					}else{
+						delbtn_id.enabled=true;
+					}
+					delbtn_id.enabled=true;
+				}
+			}
+			private function newcAction():void{
+				
+				if("新增子节点"==addcbtn_id.label){
+					addcbtn_id.label="保存";
+					editbtn_id.enabled=false;
+					addbtn_id.enabled=false;
+					newIsChild=true;
+					//detailbtn_id.enabled=false;
+					//delbtn_id.enabled=false;
+					delbtn_id.label="放弃";
+					this.delbtn_id.enabled=true;
+					detailpanel.removeAllChildren();
+					detailpanel.addChild(panelBuild.getAddPanel());
+					this.dataEnable=false;
+				}else{
+					
+					saveNewcFun();
+					addcbtn_id.label="新增子节点";
+					editbtn_id.enabled=true;
+					addbtn_id.enabled=true;
+					//detailbtn_id.enabled=true;
+					delbtn_id.enabled=true;
+					delbtn_id.label="删除";
+					this.dataEnable=true;
+				}
+			}
+			private function editAction():void{
+				if("编辑"==editbtn_id.label){
+					this.panelBuild.createEditDoc();
+					editbtn_id.label="保存";
+					addbtn_id.enabled=false;
+					//detailbtn_id.enabled=false;
+//					delbtn_id.enabled=false;
+					delbtn_id.label="放弃";
+					detailpanel.removeAllChildren();
+					detailpanel.addChild(panelBuild.getEditPanel());
+					this.dataEnable=false;
+					this.delbtn_id.enabled=true;
+					
+				}else{
+					
+					saveEditFun();
+					editbtn_id.label="编辑";
+					addbtn_id.enabled=true;
+					//detailbtn_id.enabled=true;
+					delbtn_id.enabled=true;
+					delbtn_id.label="删除";
+					this.dataEnable=true;
+					detailpanel.removeAllChildren();
+//					panelBuild.getPanel() 是返回渲染方法的结果。
+					detailpanel.addChild(panelBuild.getDetailPanel());
+				}
+				
+			}
+			private function detailAction():void{
+					detailpanel.removeAllChildren();
+//					panelBuild.getPanel() 是返回渲染方法的结果。
+					detailpanel.addChild(panelBuild.getDetailPanel());
+			}
+			private function delAction():void{
+				if(delbtn_id.label=="放弃"){
+					addbtn_id.label="新增节点";
+					addcbtn_id.label="新增子节点";
+					editbtn_id.label="编辑";
+					delbtn_id.label="删除";
+					this.dataEnable=true;
+					if(null==this.keyVal){
+						addbtn_id.enabled=true;
+						addcbtn_id.enabled=false;
+						editbtn_id.enabled=false;
+						delbtn_id.enabled=false;
+						detailpanel.removeAllChildren();
+						
+					}else{
+						addbtn_id.enabled=true;
+						editbtn_id.enabled=true;
+						addcbtn_id.enabled=true;
+						delbtn_id.enabled=true;
+						detailpanel.removeAllChildren();
+						detailpanel.addChild(panelBuild.getDetailPanel());
+					}
+				}else{
+					delFunction();
+					addbtn_id.enabled=true;
+					addcbtn_id.enabled=false;
+					editbtn_id.enabled=false;
+					delbtn_id.enabled=false;
+					detailpanel.removeAllChildren();
+				}
+			}
+			private function delFunction():void{
+				var oldRow:XML=this.objdoc.TABLEDATA.ROWDATA.ROW[0];
+				var key:String=this.objdoc.METADATA.TABLE.KEYS.KEY.@NAME;
+				var delDoc:XML=this.objdoc.copy();
+				//delete delDoc..TABLEDATA.ROWDATA.ROW[0];
+				delDoc.@["ACTION"]="del";
+				delDoc.@["ID"]=oldRow.@[key];
+				delDoc.@TABLE=this.tblName;
+				delDoc.@["KEYNAME"]=key;
+				delDoc.@["COMNAME"]=this.comp;
+				var keyVal:String=oldRow.@[key];
+				
+				
+				var tmplService:HTTPService = new HTTPService();
+					tmplService.url = UrlService.getCDSActionUrl();
+					tmplService.contentType="application/xml";     
+					tmplService.method="POST";
+					tmplService.resultFormat = "e4x";
+					tmplService.showBusyCursor=true;
+					tmplService.addEventListener(FaultEvent.FAULT, onDelFaultHttpService);
+					tmplService.addEventListener(ResultEvent.RESULT, onXMLDelResult);
+					tmplService.send(delDoc);
+			}
+			private function onDelFaultHttpService(e:FaultEvent):void{
+				Alert.show("连接服务器错误！");
+			}
+			
+			private function onXMLDelResult(e:ResultEvent):void{
+				var rtdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(rtdoc))return;
+				var idstr=rtdoc.@ID;
+				if("-1"!=idstr){
+//					processEditInfo();
+					//rebuildShowPage(this.objdoc);
+					this.treeview.delRow(idstr);
+					detailpanel.removeAllChildren();
+					Alert.show("成功删除！");
+					this.editbtn_id.enabled=false;
+					this.delbtn_id.enabled=false;
+				
+				}else{
+					Alert.show("系统删除失败！");
+				}
+			}
+			//修改结果的保存。
+			private function saveEditFun():void{
+				var doc:XML=this.panelBuild.getEditDoc();
+				if("1"!=doc.@flg){
+					return;
+					
+				}
+				if(null!=doc){
+					doc.@["ACTION"]="edit";
+					var tmplService:HTTPService = new HTTPService();
+					tmplService.url = UrlService.getCDSActionUrl();
+					tmplService.contentType="application/xml";     
+					tmplService.method="POST";
+					tmplService.resultFormat = "e4x";
+					tmplService.showBusyCursor=true;
+					tmplService.addEventListener(FaultEvent.FAULT, onEditFaultHttpService);
+					tmplService.addEventListener(ResultEvent.RESULT, onXMLEditResult);
+					tmplService.send(doc);
+				}
+			}
+			private function onEditFaultHttpService(e:FaultEvent):void{
+				Alert.show("连接服务器错误！");
+			}
+			
+			private function onXMLEditResult(e:ResultEvent):void{
+				var rtdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(rtdoc))return;
+				
+				var idstr=rtdoc.@ID;
+				if("-1"!=idstr){
+					processEditInfo();
+					rebuildShowPage(this.objdoc);
+					this.treeview.editRow(this.objdoc.TABLEDATA.ROWDATA.ROW[0]);
+					Alert.show("更新成功！");
+				}else{
+					Alert.show("系统更新失败！");
+				}
+				
+			}
+			private function processEditInfo():void{
+				var doc:XML=this.panelBuild.getEditDoc();
+				var newRow:XML=doc.TABLEDATA.ROWDATA.ROW[0];
+				var key:String=doc.METADATA.TABLE.KEYS.KEY.@NAME;
+				var oldRow:XML=this.objdoc.TABLEDATA.ROWDATA.ROW[0];
+				var metas=this.objdoc.METADATA.TABLE.FIELD;
+				var attr=null;
+				for(var i:int;i<metas.length();i++){
+					var meta:XML=XML(metas[i]);
+					var name=meta.@NAME;
+					var newval:String=newRow.@[name];
+					if(null!=newval && ""!=newval){
+						if(name==key)continue;
+						oldRow.@[name]=newval;
+					}
+					
+				}
+			}
+			
+			//新添加的是总体遍历取值。
+			private function saveNewFun():void{
+				newDoc=objdoc.copy();
+				var metas=newDoc.METADATA.TABLE.FIELD;
+				var key:String=newDoc.METADATA.TABLE.KEYS.KEY.@NAME;
+				var rows:XMLList=newDoc.TABLEDATA.ROWDATA.ROW;
+				var row:XML=null;
+				if(rows.length()>0){
+					row=rows[0];
+				}
+				var pid=null;
+				if(null==row){
+					row=<ROW/>
+					var rowElt:XML=newDoc.TABLEDATA.ROWDATA[0];
+					if(null!=rowElt){
+						rowElt.appendChild(row);
+					}
+				}
+				
+				pid=row.@["pid"];
+				//去掉key值
+				row.@[key]='';
+				//根据属性收集数据，用于提交
+				for(var i:int;i<metas.length();i++){
+					var meta:XML=XML(metas[i]);
+					var name=meta.@NAME;
+					var type=meta.@TYPE;
+					var obj:Object=getObjByName(name,detailpanel);
+					
+					
+					if(null!=obj){
+						var val='';
+						
+						if(type=="int"){
+							var textipt:TextInput=TextInput(obj);
+							val=textipt.text;
+						}else if(type=="varchar"){
+							var textipt:TextInput=TextInput(obj);
+							val=textipt.text;
+						}else if(type=="double"){
+							var textipt:TextInput=TextInput(obj);
+							val=textipt.text;
+						}else if(type=="date"){
+							var dateinput:DateField=DateField(obj);
+							val=dateinput.text;
+						}else if("file"==type || "image"==type){
+							var file:FileUpload=FileUpload(obj);
+							val=file.text;
+						}else{
+							
+						}
+						row.@[name]=val;
+					}
+					
+				}
+				if(null!=row){
+					row.@["pid"]=pid;
+				}
+				
+				
+				AddremoteRequest(newDoc);
+			}
+			//新添加的是总体遍历取值。
+			private function saveNewcFun():void{
+				newDoc=objdoc.copy();
+				var metas=newDoc.METADATA.TABLE.FIELD;
+				var key:String=newDoc.METADATA.TABLE.KEYS.KEY.@NAME;
+				var rows:XMLList=newDoc.TABLEDATA.ROWDATA.ROW;
+				var row:XML=null;
+				if(rows.length()>0){
+					row=rows[0];
+				}
+				var keyval:String=row.@[key];
+				//去掉key值
+				row.@[key]='';
+				//根据属性收集数据，用于提交
+				for(var i:int;i<metas.length();i++){
+					var meta:XML=XML(metas[i]);
+					var name=meta.@NAME;
+					var type=meta.@TYPE;
+					var obj:Object=getObjByName(name,detailpanel);
+					
+					
+					if(null!=obj){
+						var val='';
+						
+						if(type=="int"){
+							var textipt:TextInput=TextInput(obj);
+							val=textipt.text;
+						}else if(type=="varchar"){
+							var textipt:TextInput=TextInput(obj);
+							val=textipt.text;
+						}else if(type=="double"){
+							var textipt:TextInput=TextInput(obj);
+							val=textipt.text;
+						}else if(type=="date"){
+							var dateinput:DateField=DateField(obj);
+							val=dateinput.text;
+						}else if("file"==type || "image"==type){
+							var file:FileUpload=FileUpload(obj);
+							val=file.text;
+						}else{
+							
+						}
+						row.@[name]=val;
+					}
+					
+				}
+				row.@["PID"]=keyval;
+				
+				AddremoteRequest(newDoc);
+			}
+			private function AddremoteRequest(doc:XML):void{
+				doc.@["ACTION"]="add";
+				var tmplService:HTTPService = new HTTPService();
+				//tmplService.url = "mode/data/detaildoc.xml";
+				tmplService.url = UrlService.getCDSActionUrl();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onAddFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLAddResult);
+				tmplService.send(doc);
+			}
+			//添加失败！
+			private function onAddFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("连接服务器错误！");
+			}
+			
+			// 添加成功！
+			protected function onXMLAddResult(e:ResultEvent):void{
+				var key:String=newDoc.METADATA.TABLE.KEYS.KEY.@NAME;
+				var tmpdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(tmpdoc))return;
+				var idStr=tmpdoc.@ID;
+				if("-1"!=idStr){
+					
+					var rows= newDoc.TABLEDATA.ROWDATA.ROW;
+					var row:XML=rows[0];
+					row.@[key]=idStr;
+					var node:XML=<ROW id="24" pid="13" name="水口"/>
+					node.@ID=idStr;
+					node.@NAME=row.@NAME;
+					node.@REMARK=row.@REMARK;
+					node.@PID=row.@PID;
+					if(null!=this.treeview){
+						if(newIsChild){
+							//Alert.show("添加子节点");
+							this.treeview.addCRow(node);
+						}else{
+							this.treeview.addRow(node);
+						}
+						
+					}
+					//初始化添加处理
+					this.objdoc=newDoc.copy();
+					
+				}else{
+					Alert.show("保存失败！");
+				}
+				this.keyVal=idStr;
+				rebuildShowPage(newDoc);
+			}
+			
+			
+			private function saveDelFun():void{
+				
+			}
+			private function remoteRequest():void{
+				
+			}
+			
+			private function getObjByName(name:String,box:Box):Object{
+				
+				var child=box.getChildByName(name);
+				
+				if(null!=child){
+					return child;
+					
+				}else{
+					var childs:Array=box.getChildren();
+					if(childs.length>0){
+						for(var i:int;i<childs.length;i++){
+							var ch:Object=childs[i];
+							try{
+								var mybox=Box(ch)
+								child=getObjByName(name,mybox);
+								if(null!=child)return child;
+							}catch(e:Error){
+								continue;
+							}
+							
+						}
+					}
+				}
+				return null;
+			}
+		]]>
+	</mx:Script>
+	<mx:XML id="detailReq" format="e4x">
+        <DATAPACKET ACTION="detail">
+            
+        </DATAPACKET >
+    </mx:XML>
+    	
+    
+	<mx:Panel width="100%" height="100%" horizontalAlign="center" >
+		<mx:ApplicationControlBar name="menubar" width="100%" height="39" barColor="#e0" alpha="1">
+			<mx:HBox visible="false" id="btns">
+				<mx:Button label="新增节点" name="addbtn" id="addbtn_id" styleName="addNewbtn" click="newAction();"/>
+				<mx:Button label="新增子节点" name="addcbtn" id="addcbtn_id" styleName="addNewbtn" click="newcAction();"/>
+				<mx:Button label="编辑" name="editbtn" id="editbtn_id" styleName="editbtn" click="editAction();"/>
+				<!--mx:Button label="查看" name="detailbtn" id="detailbtn_id" styleName="detailbtn" click="detailAction();"/-->
+				<mx:Button label="删除" name="delbtn" id="delbtn_id" styleName="delbtn" click="delAction();"/>
+			</mx:HBox>
+		</mx:ApplicationControlBar>
+		<mx:Panel  width="70%" height="80%">
+			<mx:Box id="detailpanel" height="100%" paddingLeft="10">
+				
+			</mx:Box>
+		</mx:Panel>
+	</mx:Panel>
+</mx:Box>

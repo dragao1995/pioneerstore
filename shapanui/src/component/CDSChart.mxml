@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CDSRender xmlns="component.*" xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" xmlns:view="view.*">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.SortField;
+			import mx.collections.Sort;
+			import mx.utils.ArrayUtil;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			private var parsArr:Array=null;
+			public function showData():void{
+				try{
+					parsArr=new Array();
+					var mates:XMLList=this.doc.METADATA.TABLE.FIELD;
+					for each(var mate:XML in mates){
+						var obj:Object=new Object();
+						var type:String=mate.@TYPE;
+						if("varchar"==type || "image"==type  || "file"==type  || "date"==type) continue;
+						var name:String=mate.@NAME;
+						if("ID"==name || "PHYOBJ"==name || "INSERT_TIME"==name || "UPDATE_TIME"==name || "DATAMONTH"==name) continue;
+						obj["label"]=mate.@REMARK;
+						obj["code"]=mate.@NAME;
+						this.parsArr.push(obj);
+					}
+					ptype.dataProvider=this.parsArr;
+					
+					ptype.selectedIndex=0;
+					var chartdoc:XML=this.cds2Chartdata();
+					chartp.buildChart(chartdoc);
+				}catch(e:Error){
+					Alert.show(e.getStackTrace());
+				}
+				
+			}
+			private function cds2Chartdata():XML{
+				
+				var chartdoc:XML=<chart/>;
+				var meateElt:XML=<meate/>;
+				var datasElt:XML=<datas/>;
+				chartdoc.appendChild(meateElt);
+				chartdoc.appendChild(datasElt);
+				var parsObj:Object=ptype.selectedItem;
+				var par:String=parsObj["code"];
+				
+				var rows:XMLList=this.doc.TABLEDATA.ROWDATA.ROW;
+				for each(var row in rows){
+					var time:String=row.@DATAMONTH;
+					var name:String=row.@PHYOBJ_NAME;
+					var elt:XML=this.selectRow(datasElt,name);
+					if(null==elt){
+						elt=<data/>
+						elt.@name=name;
+						elt.@ID=row.@ID;
+						datasElt.appendChild(elt);
+					}
+					elt.@[time]=row.@[par];
+					var mc:XML=this.getMate(meateElt,time);
+					if(null==mc){
+						var mate:XML=<mc/>
+						mate.@code=time;
+						mate.@name=time;
+						meateElt.appendChild(mate);
+					}
+					
+				}
+				totalcalculate(chartdoc);
+				sortMeta(chartdoc);
+				//linename="近期趋势" piename="近期饼图" clumnname="近期柱图" name="近期任务曲线"
+				chartdoc.@linename="近期趋势";
+				chartdoc.@piename="近期饼图"
+				chartdoc.@clumnname="近期柱图"
+				chartdoc.@name="近期任务曲线"
+				chartdoc.@TABLE=this.doc.@TABLE;
+				return chartdoc;
+			}
+			private function getMate(matesElt:XML ,code:String):XML{
+				var mates:XMLList=matesElt.mc;
+				var elt:XML=null;
+				for each(var mc:XML in mates){
+					if(mc.@code==code){
+						elt=mc;
+					}
+				}
+				return elt;
+			}
+			private function sortMeta(doc:XML):void{
+				var mcs:XMLList=doc.meate.mc;
+				var arr:Array=new Array();
+				
+				var mcElt:XML=<meate/>
+				for each(var mc:XML in mcs){
+					arr.push(mc.@code);
+				}
+				var sort:Sort=new Sort();
+				
+
+				sort.sort(arr);
+				for each(var codestr:String in arr){
+					var elt:XMLList=doc.meate.mc.(@code == codestr);
+					if(null!=elt){
+						mcElt.appendChild(elt[0]);
+						
+					}
+				}
+				delete doc.meate;
+				var data:XML=doc.datas[0];
+				doc.insertChildBefore(data,mcElt);
+			}
+			
+			private function totalcalculate(doc:XML):void{
+				var rows:XMLList=doc.datas.data;
+				var mcs:XMLList=doc.meate.mc;
+				
+				for each(var row:XML in rows){
+					var total:Number=0;
+					for each (var mc:XML in mcs){
+						var code:String=mc.@code;
+						var val:String=row.@[code];
+						if(null==val || ""==val)continue;
+						total+=Number(val);
+					}
+					row.@total=""+total;
+				}
+			}
+			private function selectRow(datasElt:XML,name:String):XML{
+				var datas:XMLList=datasElt.data;
+				var elt:XML=null;
+				for each(var data:XML in datas){
+					if(data.@name==name){
+						elt= data;
+						break;
+					}
+				}
+				return elt;
+			}
+			
+			private function parChange():void{
+				var parsObj:Object=ptype.selectedItem;
+				var par:String=parsObj["code"];
+				var chartdoc:XML=this.cds2Chartdata();
+				chartp.buildChart(chartdoc);
+			}
+		]]>
+	</mx:Script>
+	<mx:HBox>
+		<mx:Label text="展示参数 : "/><mx:ComboBox id="ptype" change="parChange();"/>
+	</mx:HBox>
+	<mx:Box width="100%" height="100%">
+		<view:ChartComp id="chartp" width="100%"/>
+	</mx:Box>
+</CDSRender>

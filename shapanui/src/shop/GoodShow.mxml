@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"
+	creationComplete="init();"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Style>
+		.labelhead{
+			font-size:15;
+			color:#123456;
+			font-style:normal;
+			font-family:Arial;
+			font-weight:bold;
+		}
+	</mx:Style>
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.HRule;
+			import mx.containers.HBox;
+			import component.ImageBrowse;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.http.mxml.HTTPService;
+			import com.ResultFilter;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.controls.Alert;
+			
+			
+			private var idStr:String=null;
+			
+			private function init():void{
+				if(null!=this.idStr){
+					getData();
+				}
+			}
+			public function setId(idStr:String):void{
+				this.idStr=idStr;
+				getData();
+			}
+			
+			private function getData():void{
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="detail";
+				doc.@TABLE="商品明细";
+				
+				doc.@ID=this.idStr;
+				
+				var tmplService:HTTPService = new HTTPService();
+				tmplService.url = UrlService.getDetailUrl();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onDetailResult);
+				tmplService.send(doc);
+			}
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("网络连接错误！:"+e.message);
+			}
+			private function onDetailResult(e:ResultEvent):void{
+				var tmpdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(tmpdoc))return;
+				///Alert.show(tmpdoc.toXMLString());
+				showData(tmpdoc);
+			}
+			private function showData(doc:XML):void{
+				var row:XML=doc.TABLEDATA.ROWDATA.ROW[0];
+				if(null!=row){
+					var imgPath=row.@OBJIMG;
+					var img:ImageBrowse=new ImageBrowse();
+					img.percentHeight=100;
+					img.percentWidth=100;
+					img.row=row;
+	            	img.setComp(doc.@TABLECODE);
+	            	img.setName(imgPath);
+	            	imgbrowse.removeAllChildren();
+	            	imgbrowse.addChild(img);
+	            	var code=row.@CODE;
+	            	goodcode.text=code;
+	            	var name=row.@NAME;
+	            	goodname.text=name;
+	            	var shchprice:String=row.@OUTPRICE;
+	            	shcprice.text=shchprice;
+	            	var t_youhprice:String=row.@CUXIAOPRICE;
+	            	youhprice.text=t_youhprice;
+	            	var isNew=row.@ISNEW;
+	            	if("是"==isNew){
+	            		newflg.visible=true;
+	            	}else{
+	            		newflg.visible=false;
+	            	}
+	            	var fileds:XMLList=doc.METADATA.TABLE.FIELD;
+	            	var i:int=0;
+	            	this.box1.removeAllChildren();
+	            	this.box2.removeAllChildren();
+	            	for each(var filed:XML in fileds){
+	            		var filedName=filed.@NAME;
+	            		var isfk:String=filed.@ISFK;
+	            		
+	            		var val:String=row.@[filedName];
+	            		if("1"==isfk){
+	            			val=row.@[filedName+"_NAME"];
+	            		}
+	            		
+	            		if(null==val || ""==val)continue;
+	            		if("ID"==filedName || "ICON"==filedName || "CODE"==filedName || "NAME"==filedName || "ISNEW"==filedName || "ISTUIJIAN"==filedName || "ISCUXIAO"==filedName )continue;
+	            		if("CUXIAOPRICE"==filedName || "INPRICE"==filedName || "OUTPRICE"==filedName || "NUMBER"==filedName || "ALERT_NUMBER"==filedName || "OUTDATE"==filedName || "BEFOREALERT"==filedName )continue;
+	            		if("DAY_LAZYE"==filedName || "MONTH_LAZYE"==filedName || "OBJIMG"==filedName || "REMARK"==filedName)continue;
+	            		var hbox:HBox=new HBox();
+	            		hbox.percentWidth=100;
+	            		var lab:Label=new Label();
+	            		lab.percentWidth=20
+	            		lab.text=filed.@REMARK;
+	            		hbox.addChild(lab);
+	            		var text:Text=new Text();
+	            		text.text=val;
+	            		text.percentWidth=80;
+	            		hbox.addChild(text);
+	            		var hrule:HRule=new HRule();
+	            		hrule.percentWidth=100;
+	            		if(i%2==0){
+	            			this.box1.addChild(hbox);
+	            			this.box1.addChild(hrule);
+	            		}else if(i%2==1){
+	            			this.box2.addChild(hbox);
+	            			this.box2.addChild(hrule);
+	            		}
+	            		
+	            		
+	            		i++;
+	            	}
+	            	var remark:String=row.@REMARK;
+	            	
+	            	goodremark.text=remark;
+	            	
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Box width="100%" height="100%" styleName="label" id="mainBox">
+		<mx:HBox width="100%" height="30%" backgroundImage="assets/nameframe.gif">
+			
+			<mx:Box  width="260" height="260" horizontalAlign="center" verticalAlign="middle"  backgroundImage="assets/imgframe.gif">
+				<mx:Box width="230" height="230" id="imgbrowse" >
+					<mx:Label text="img"/>
+				</mx:Box>
+			</mx:Box>
+			
+			<mx:VRule height="100%" width="1"/>
+			
+			<mx:Box width="50%" height="100%" paddingLeft="30" paddingTop="60">
+				<mx:Image source="assets/newg.jpg" id="newflg" left="10" top="10" visible="false"/>
+				<mx:HBox>
+					
+					<mx:Label text="编号"/>
+					<mx:Text id="goodcode" />
+				</mx:HBox>
+				
+				<mx:Label id="goodname" text="名称" styleName="labelhead"/>
+				<mx:HBox>
+					<mx:Label text="市场价：" width="60"/><mx:Label id="shcprice" width="40"/><mx:Label text="元"/>
+				</mx:HBox>
+				<mx:HBox>
+					<mx:Label text="优惠价：" width="60"/><mx:Label id="youhprice" width="40"/><mx:Label text="元"/>
+				</mx:HBox>
+			</mx:Box>
+		</mx:HBox>
+		<mx:Panel title="详细信息" width="100%" height="70%" id="detalpanel"  >
+			<mx:HBox height="100%" width="100%" paddingLeft="60" paddingRight="60">
+				<mx:Box id="box1" width="45%" height="100%">
+					
+				</mx:Box>
+				<mx:VRule height="100%" width="10%" />
+				<mx:Box id="box2"  width="45%" height="100%">
+					
+				</mx:Box>
+			</mx:HBox>
+			<mx:Text id="goodremark" width="100%"/>
+		</mx:Panel>
+	</mx:Box>
+</mx:Box>

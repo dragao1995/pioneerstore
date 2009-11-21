@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="100" height="300"
+	showCloseButton="true"
+	close="PopUpManager.removePopUp(this);"
+	creationComplete="init();"
+	title="咨询"
+	styleName="label"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.containers.HBox;
+			import mx.controls.Image;
+			import mx.controls.Label;
+			import mx.controls.Alert;
+			import com.ResultFilter;
+			import mx.rpc.events.FaultEvent;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.mxml.HTTPService;
+			import mx.managers.PopUpManager;
+			private function init():void{
+				var qdoc:XML=<DATAPACKET/>
+				qdoc.@TABLE="咨询人员";
+				qdoc.@ACTION="list";
+				qdoc.@MAXROW="500";
+				qdoc.@CONDITION="ID<>-1";
+				
+				var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getListUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onDataResult);
+				dataService.send(qdoc);			
+			}
+			private function onDataResult(e:ResultEvent):void{
+			
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				var rows:XMLList=data.TABLEDATA.ROWDATA.ROW;
+				mainp.removeAllChildren();
+				for each(var row:XML in rows){
+					var box:Label=new Label();
+					box.styleName="label";
+					
+					
+					
+					box.text=row.@NAME;
+					var img:Image=new Image();
+					img.source="assets/qq.gif";
+					var pbox:HBox=new HBox();
+					pbox.addChild(img);
+					pbox.addChild(box);
+					pbox.document=row;
+					pbox.addEventListener(MouseEvent.CLICK,openQQ);
+					mainp.addChild(pbox);
+				}
+			}
+			private function openQQ(e:MouseEvent):void{
+				var l:HBox=HBox(e.currentTarget);
+				var row:XML=XML(l.document);
+				//Alert.show(row.toXMLString());
+				navigateToURL(new URLRequest("tencent://message/?uin="+row.@QQ),"self");
+			}
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("网络连接错误，请重试！");
+			}
+		]]>
+	</mx:Script>
+	<mx:Box horizontalAlign="center" id="mainp" width="100%">
+		
+	</mx:Box>
+</mx:TitleWindow>

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical" 
+	width="450"
+	height="400"
+	styleName="label"
+	creationComplete="init();"
+	doubleClick="statusChange();"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.events.ItemClickEvent;
+			import shapan.marker.BusinessCompare;
+			import com.ResultFilter;
+			import component.ImageBrowse;
+			import mx.containers.Panel;
+			import mx.core.Application;
+			import view.object.SingleObjectView;
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.http.mxml.HTTPService;
+			private var wstatus:String="0";
+			private var cwidth:int=0;
+			private var cheight:int=0;
+			private var cx:int=0;
+			private var cy:int=0;
+			private var tblName:String=null;
+			private var objId:String=null;
+			private var objStruct:String=null;
+			private var doc:XML=null;
+			//----------------地图弹出窗口-----------------
+			private var maxmenu:ContextMenuItem =null;
+			public function init():void{
+				this.minWidth=400;
+		 		this.minHeight=400;
+		 		this.maxHeight=Application.application.screen.height-100;
+		 		this.maxWidth=Application.application.screen.width*3/4;
+		 		
+		 		var ctmenu:ContextMenu = new ContextMenu();
+				maxmenu = new ContextMenuItem('最大窗口');
+				maxmenu.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+	              statusChange();
+	            });
+				ctmenu.customItems.push(maxmenu);
+				
+				this.contextMenu=ctmenu;
+				this.initData();
+			}
+			private function statusChange():void{
+				if("0"==wstatus){
+					wstatus="1";
+					maxmenu.caption="还原窗口";
+					this.cwidth=this.width;
+					this.cheight=this.height;
+					this.cx=this.x;
+					this.cy=this.y;
+					this.width=Application.application.screen.width;
+					this.height=Application.application.screen.height;
+					this.x=0;
+					this.y=0;
+				}else{
+					wstatus="0";
+					maxmenu.caption="最大窗口";
+					this.width=this.cwidth;
+					this.height=this.cheight;
+					this.x=this.cx;
+					this.y=this.cy;
+				}
+			}
+			public function setMate(row:XML):void{
+				this.doc=row;
+				
+			}
+			private function initData():void{
+				
+				var tblName:String=this.doc.@PHYSICAL_NAME;
+				var id:String=this.doc.@PHYSICAL_ID;
+				if((null==id || ""==id) && (null==tblName || ""==tblName)){
+					id=this.doc.@ID;
+					tblName=this.doc.@TYPE;
+				}else if(null==tblName || ""==tblName){
+					tblName="我的标记";
+					id=this.doc.@ID;
+				}
+				if(null==tblName || ""==tblName){
+					tblName="我的标记";
+				}
+				this.tblName=tblName;
+				this.objId=id;
+				getDetail(tblName,id);
+			}
+			private function httpFault(event:FaultEvent):void {
+                Alert.show("网络连接错误，请重试！");
+            }
+			private function getDetail(tblName:String,id:String):void{
+				var doc:XML=<DATAPACKET/>;
+					doc.@ACTION="detail";
+					doc.@TABLE=tblName;
+					this.title=tblName;
+					doc.@ID=id;
+					//Alert.show(doc.toXMLString());
+					var baseInfo:SingleObjectView=new SingleObjectView();
+	                baseInfo.percentHeight=100;
+	                baseInfo.percentWidth=100;
+	                baseInfo.label="基础信息"
+	                baseInfo.setParentObj(this);
+	                var hls:Array=new Array();
+	                hls.push("X");
+	                hls.push("Y");
+	                hls.push("STATUS");
+	                hls.push("OBJIMG");
+	                baseInfo.setHiddenLs(hls);
+	                baseInfo.setMenuBarVisible(false);
+	                baseInfo.setCondition(tblName,"ID="+id);
+	                displaybar.addChild(baseInfo);
+	                
+	                
+					return ;
+					
+			}
+			public function setDoc(doc:XML):void{
+				try{
+					
+					var pidElt:XML =doc.METADATA.TABLE.FIELD.(@NAME =='PID')[0];
+					if(null==pidElt){
+						objStruct="list";
+					}else{
+						objStruct="tree";
+					}
+					var elt:XML=doc.METADATA.TABLE.FIELD.(@NAME =='OBJIMG')[0];
+					var row:XML=doc.TABLEDATA.ROWDATA.ROW[0];
+					if(null!=elt){
+						var panel:Panel=new Panel();
+						panel.label="现场图像";
+						panel.percentHeight=100;
+						panel.percentWidth=100;
+						var imgb:ImageBrowse=new ImageBrowse();
+						var imgName:String=row.@OBJIMG;
+						var comp:String=doc.@TABLECODE;
+						imgb.percentWidth=100;
+						imgb.percentHeight=100;
+						imgb.setComp(comp);
+						imgb.setName(imgName);
+						
+						panel.addChild(imgb);
+						displaybar.addChildAt(panel,0);
+						//displaybar.selectedIndex=0;
+						tabplace.selectedIndex=0;
+						//displaybar.addChild(panel);
+						
+					}
+					
+				}catch(e:Error){
+					
+				}
+				getBusiness();
+			}
+			private function getBusiness():void{
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="list";
+				doc.@TABLE="表注册";
+				doc.@CONDITION="id in(select BUSINESS_TABLE from ctl_r_business_object where OBJECT_TABLE in(select id from s_table where name='"+this.tblName+"'))";
+				
+				
+				var tmplService:HTTPService = new HTTPService();
+				tmplService.url = UrlService.getCDSActionUrl();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				tmplService.send(doc);	
+			}
+			private function onXMLResult(e:ResultEvent):void{
+			
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				var rows:XMLList=data.TABLEDATA.ROWDATA.ROW;
+				for each(var row:XML in rows){
+					var businessP:BusinessCompare=new BusinessCompare();
+					businessP.setMate(row.@NAME,this.tblName,this.objId,this.objStruct);
+					displaybar.addChild(businessP);
+				}
+				
+			}
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("服务器连接失败！");
+			}
+			private function stackClick(e:ItemClickEvent):void{
+				
+				if("基础信息"!=e.label && "现场图像"!=e.label){
+					var bc:BusinessCompare=BusinessCompare(displaybar.selectedChild);
+					bc.init();
+					
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Box width="100%" height="100%">
+		<mx:ApplicationControlBar width="100%" height="35">
+			<mx:TabBar id="tabplace" itemClick="stackClick(event)"  paddingLeft="1" paddingRight="1" left="1" selectedTabTextStyleName="selectedTab"  alpha="1" styleName="tabStyle" dataProvider="displaybar"/>
+		</mx:ApplicationControlBar>
+		<mx:ViewStack  height="100%" width="100%" id="displaybar" horizontalGap="1">
+			
+			
+		</mx:ViewStack>
+		
+	</mx:Box>
+</mx:TitleWindow>

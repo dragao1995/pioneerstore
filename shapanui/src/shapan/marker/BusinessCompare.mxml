@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical"
+	headerHeight="1"
+	creationComplete="compinit();"
+	verticalGap="1"
+	>
+	<mx:Script>
+		<![CDATA[
+			import component.CDSRender;
+			import component.CDSChart;
+			import mx.events.ItemClickEvent;
+			import mx.controls.Label;
+			import mx.events.CalendarLayoutChangeEvent;
+			import mx.events.FlexEvent;
+			import view.selWin.SelWindow;
+			import mx.managers.PopUpManager;
+			import view.selWin.ObjSelWindow;
+			import view.object.ObjectCompareView;
+			import com.ResultFilter;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.http.mxml.HTTPService;
+			import com.pioneer.http.UrlService;
+			import mx.controls.Alert;
+			private var tblName:String=null;
+			private var objName:String=null;
+			private var objId:String=null;
+			private var objStruct:String=null;
+			private var bdoc:XML=null;
+			private var ddoc:XML=null;
+			private var jdoc:XML=null;
+			public function setMate(tblName:String,objName:String,objId:String,objStruct):void{
+				this.tblName=tblName;
+				this.objName=objName;
+				this.objId=objId;
+				this.objStruct=objStruct;
+				setLabel();
+			}
+			private function setLabel():void{
+				if(null!=this.tblName && null!=this.objName){
+					var title:String=this.tblName.substring(this.objName.length,this.tblName.length);
+					this.label=title;
+				}
+			}
+			private var flg:Boolean=false;
+			public function init():void{
+				if(!flg){
+					flg=true;
+					getLastData()
+				}
+			}
+			private function compinit():void{
+				datamonthfield.styleName="textInput";
+				datamonthfield.formatString="YYYYMM";
+				datamonthfield.dayNames=['日','一','二','三','四','五','六'];
+				datamonthfield.monthNames=['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+		
+			}
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("服务器连接失败！");
+			}
+			private function getLastData():void{
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="lastdetail";
+				doc.@TABLE=this.tblName;
+				doc.@OBJID=this.objId;
+				doc.@DATAMONTH=datamonthfield.text;
+				var tmplService:HTTPService = new HTTPService();
+				tmplService.url = UrlService.getShapanCDSURL();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				tmplService.send(doc);	
+			}
+			private var oldDate:String=null;
+			var bcp:ObjectCompareView=null;
+			var chart:CDSChart=null;
+			private function onXMLResult(e:ResultEvent):void{
+			
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				var row:XML=data.TABLEDATA.ROWDATA.ROW[0];
+				if(null!=row){
+					var datamonth:String=row.@DATAMONTH;
+					datamonthfield.text=datamonth;
+					oldDate=datamonth;
+				}
+				if(bcp==null){
+					bcp=new ObjectCompareView();
+					showP.addChild(bcp);
+				}
+				if(null==chart){
+					chart=new CDSChart();
+				}
+				this.bdoc=data;
+				this.ddoc=data.copy();
+				bcp.setDoc(data);
+				bcp.showData();
+			}
+			private function selectCompareData():void{
+				if("tree"==this.objStruct){
+					var selWin:SelWindow =SelWindow(PopUpManager.createPopUp(this, SelWindow, false));
+					selWin.setParentObj(this);
+					selWin.setTable(this.objName);
+					var point2:Point = new Point();
+					point2=this.localToGlobal(point2);
+					selWin.x=point2.x+15;
+	                selWin.y=point2.y+5;
+				}else if("list"==this.objStruct){
+					var listWin:ObjSelWindow =ObjSelWindow(PopUpManager.createPopUp(this, ObjSelWindow, false));
+					listWin.title=this.objName;
+					listWin.setParentBox(this);
+					listWin.setMeta(this.objName);
+					var point2:Point = new Point();
+					point2=this.localToGlobal(point2);
+					listWin.x=point2.x+15;
+	                listWin.y=point2.y+5;
+				}
+			}
+			public function addObj(obj:Object):void{
+				//Alert.show("id="+obj["ID"]);
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="lastdetail";
+				doc.@TABLE=this.tblName;
+				doc.@OBJID=obj["ID"];
+				doc.@DATAMONTH=datamonthfield.text;
+				var tmplService:HTTPService = new HTTPService();
+				tmplService.url = UrlService.getShapanCDSURL();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onCompareXMLResult);
+				tmplService.send(doc);	
+			}
+			private function onCompareXMLResult(e:ResultEvent):void{
+			
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				//var rows:XMLList=data.TABLEDATA.ROWDATA.ROW;
+				if(bcp==null){
+					bcp=new ObjectCompareView();
+					
+				}
+				if(null==chart){
+					chart=new CDSChart();
+				}
+				var row:XML=data.TABLEDATA.ROWDATA.ROW[0];
+				var rows:XML=this.bdoc.TABLEDATA.ROWDATA[0];
+				rows.appendChild(row);
+				var styleObj:Object=stylecomb.selectedItem;
+				var styleType:String=styleObj["code"];
+				showP.removeAllChildren();
+				if("chart"==styleType){
+					showP.addChild(chart);
+					chart.setDoc(this.bdoc);
+					chart.showData();
+				}else if("word"==styleType){
+					showP.addChild(bcp);
+					bcp.setDoc(this.bdoc);
+					bcp.showData();
+					
+				}
+				
+			}
+			private var getflg:Boolean=true;
+			private function dateChange(e:CalendarLayoutChangeEvent):void{
+				var newObj:Object=typecomb.selectedItem;
+				var newType:String=newObj["code"];
+				 if(this.oldDate!=datamonthfield.text){
+				 	if(getflg){
+				 		getflg=false;
+				 		if("single"==newType){
+				 			getLastData();
+				 		}else if("current"==newType){
+				 			getRalateData();
+				 		}
+				 		this.oldDate=datamonthfield.text;
+				 		getflg=true;
+				 	}
+				 	
+				 }
+			}
+			private function setType(e:ItemClickEvent):void{
+				
+				
+				
+			}
+			private function getRalateData():void{
+				Alert.show("getRalateData");
+			}
+			
+			private function styleChange():void{
+				var styleObj:Object=stylecomb.selectedItem;
+				var styleype:String=styleObj["code"];
+				showP.removeAllChildren();
+				if("chart"==styleype){
+					showP.addChild(chart);
+					
+					chart.setDoc(bcp.doc);
+					chart.showData();
+					
+				}else if("word"==styleype){
+					showP.addChild(bcp);
+					
+					bcp.setDoc(chart.doc);
+					bcp.showData();
+				}
+			}
+			
+			private function dataTypeChange():void{
+				var styleObj:Object=stylecomb.selectedItem;
+				var styleType:String=styleObj["code"];
+				var newObj:Object=typecomb.selectedItem;
+				var newType:String=newObj["code"];
+				if("single"==newType){
+					stylecomb.enabled=false;
+					comparesel.visible=false;
+					comparesel.width=0;
+					var row:XML=this.ddoc.TABLEDATA.ROWDATA.ROW[0];
+					if(null!=row){
+						var datamonth:String=row.@DATAMONTH;
+						datamonthfield.text=datamonth;
+						oldDate=datamonth;
+					}
+				}else if("compare"==newType){
+					comparesel.visible=true;
+					comparesel.percentWidth=50;
+					stylecomb.enabled=true;
+				}else{
+					comparesel.visible=false;
+					comparesel.width=0;
+					stylecomb.enabled=true;
+				}
+				showP.removeAllChildren();
+				if("single"==newType){
+					showP.addChild(bcp);
+					bcp.setDoc(this.ddoc);
+					bcp.showData();
+					stylecomb.selectedIndex=0;
+					
+				}else if("current"==newType){
+					if(null==this.jdoc){
+						getRalateData();
+					}
+					
+					if("chart"==styleType){
+						showP.addChild(chart);
+						chart.setDoc(this.jdoc);
+						chart.showData();
+						
+					}else if("word"==styleType){
+						showP.addChild(bcp);
+						bcp.setDoc(this.jdoc);
+						bcp.showData();
+						
+					}
+					
+				}else if("compare"==newType){
+					if("chart"==styleType){
+						showP.addChild(chart);
+						chart.setDoc(this.bdoc);
+						chart.showData();
+					}else if("word"==styleType){
+						showP.addChild(bcp);
+						bcp.setDoc(this.bdoc);
+						bcp.showData();
+					}
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Array id="arr">
+        <mx:Object label="单月" code="single"/>
+        <mx:Object label="近期" code="current"/>
+        <mx:Object label="比较" code="compare"/>
+    </mx:Array>
+    <mx:Array id="stylename">
+        <mx:Object label="文字" code="word"/>
+        <mx:Object label="图表" code="chart"/>
+    </mx:Array>
+	<mx:HBox width="100%" height="35" verticalGap="0" horizontalGap="0">
+		<mx:ApplicationControlBar height="34" horizontalGap="0" verticalGap="0">
+			<mx:Label text=" 类型:"/>
+			<mx:ComboBox id="typecomb" width="66" styleName="label" dataProvider="{arr}" change="dataTypeChange();"/>
+			
+			<mx:Label text=" 形式:"/>
+			<mx:ComboBox id="stylecomb" enabled="false" width="66" styleName="label" dataProvider="{stylename}" change="styleChange();"/>
+			<mx:Label text=" 月份:"/>
+			<mx:DateField change="dateChange(event);"  id="datamonthfield"/>
+		</mx:ApplicationControlBar>
+		<mx:ApplicationControlBar id="comparesel" width="0" visible="false" height="34" horizontalGap="0"  verticalGap="0">
+			<mx:Button label="选择" click="selectCompareData();"/>
+		</mx:ApplicationControlBar>
+		
+	</mx:HBox>
+	<mx:Box id="showP" width="100%" height="100%" verticalGap="1">
+		
+	</mx:Box>
+</mx:Panel>

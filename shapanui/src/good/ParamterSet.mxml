@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle"
+	creationComplete="init();"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.rpc.http.mxml.HTTPService;
+			import com.ResultFilter;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.controls.Alert;
+			import com.pioneer.http.UrlService;
+			import com.SharedObjectUtil;
+			private function init():void{
+				var servurl:String=SharedObjectUtil.getServiceURL();
+				if(servurl==null){
+					servurl="http://localhost:8899/baseDatePrv/";
+				}
+				serverUrl.text=servurl;
+				UrlService.setBasePath(servurl);
+				var shopName:String=SharedObjectUtil.getShopName();
+				
+				shopnameid.text=shopName;
+				SaleComp.shopName=shopName;
+			}
+			
+			
+			private function saveServiceUrl():void{
+				SharedObjectUtil.setServiceURL(serverUrl.text);
+				UrlService.setBasePath(serverUrl.text);
+			}
+			private function saveShopName():void{
+				
+				var xml:XML=<DATAPACKET/>;
+				xml.@shopName=shopnameid.text;
+				xml.@ACTION="pars";
+				//发送到服务器
+				var tmplService:HTTPService = new HTTPService();
+				//tmplService.url = "mode/data/detaildoc.xml";
+				tmplService.url = UrlService.getGoodCDSURL();
+				//tmplService.url = "assets/info.xml";
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				tmplService.send(xml);
+			}
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("网络连接错误，请重试！");
+			}
+			protected function onXMLResult(e:ResultEvent):void{
+				
+				var tmpdoc:XML=XML(e.result);
+				
+				if(!ResultFilter.filter(tmpdoc))return;
+				SharedObjectUtil.setShopName(shopnameid.text);
+				SaleComp.shopName=shopnameid.text;
+			}
+		]]>
+	</mx:Script>
+	<mx:Panel title="参数设置" width="50%" height="50%">
+		<mx:HBox>
+			<mx:Label text="服务器地址: " styleName="label" width="90"/>
+			
+			<mx:Label id="serverUrl" />
+		</mx:HBox>
+		<mx:HBox>
+			<mx:Label text="商店名称: " styleName="label" width="90"/>
+			<mx:TextInput id="shopnameid" text="       时代超市-腾冲店" styleName="textInput"/>
+			<mx:Button label="保存" styleName="btn" click="saveShopName()"/>
+		</mx:HBox>
+	</mx:Panel>
+</mx:Box>

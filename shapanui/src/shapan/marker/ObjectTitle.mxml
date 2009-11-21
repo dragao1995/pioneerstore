@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Tile xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="300">
+	<mx:Script>
+		<![CDATA[
+			import com.google.maps.Map;
+			import com.google.maps.MapMouseEvent;
+			import com.google.maps.InfoWindowOptions;
+			import com.google.maps.LatLng;
+			import com.google.maps.overlays.Marker;
+			import com.google.maps.overlays.MarkerOptions;
+			import shapan.window.MarketObjectWin;
+			import view.selWin.ObjEditWindow;
+			import system.CompanyUserSel;
+			import mx.managers.PopUpManager;
+			import mx.core.Application;
+			import view.selWin.ObjWindow;
+			import component.ImageBrowse;
+			import com.ResultFilter;
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.http.mxml.HTTPService;
+			import com.AppShareObj;
+			private var tblName:String=null;
+			private var parentObj:Object=null;
+			private var map:Map=null;
+			
+			public function setMap(map:Map):void{
+				this.map=map;
+			}
+			public function setParentObj(parentObj:Object):void{
+				this.parentObj=parentObj;
+			}
+			public function setMate(tableName:String):void{
+				this.tblName=tableName;
+				getData();
+			}
+			private function getData():void{
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="list";
+				doc.@TABLE="地理对象存储";
+				var userdoc:XML=AppShareObj.getUserDoc();
+				doc.@CONDITION="PHYSICAL_NAME='"+this.tblName+"' and create_id="+userdoc.@ID;
+				
+				var tmplService:HTTPService = new HTTPService();
+				tmplService.url = UrlService.getDetailUrl();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onListResult);
+				tmplService.send(doc);
+			}
+			private function initFreshMenu():void{
+				var ctmenu:ContextMenu = new ContextMenu();
+				var freshmenu:ContextMenuItem = new ContextMenuItem('刷新');
+				freshmenu.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+	              this.removeAllChildren();
+	             getData();
+	            });
+				ctmenu.customItems.push(freshmenu);
+				
+				this.contextMenu=ctmenu;
+			}
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("网络连接错误！:"+e.message);
+			}
+			protected function onListResult(e:ResultEvent):void{
+				var tmpdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(tmpdoc))return;
+				var menu:ContextMenu = new ContextMenu();
+				var delmenu:ContextMenuItem = new ContextMenuItem('删除');
+				var fabu:ContextMenuItem= new ContextMenuItem('发布');
+				var remarkMenu:ContextMenuItem= new ContextMenuItem('备注信息');
+				delmenu.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+	              
+	             delMarket();
+	            });
+	            remarkMenu.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+	              
+	             showRemark();
+	            });
+	            fabu.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+	             fabuMark();
+	            });
+				menu.customItems.push(delmenu);
+				menu.customItems.push(fabu);
+				
+				
+				menu.customItems.push(remarkMenu);
+				var rows:XMLList=tmpdoc.TABLEDATA.ROWDATA.ROW;
+				if(null==rows || rows.length()<1){
+					if(null!=this.parentObj){
+						this.parentObj.removeChild(this);
+					}
+				}
+				for each(var row:XML in rows){
+					var name:String=row.@NAME;
+					var path:String=row.@ICON;
+					var img:ImageBrowse=new ImageBrowse();
+					img.row=row;
+	            	img.setComp("ctl_biaoji");
+	            	img.setLabel(name);
+	            	img.setName(path);
+	            	
+	            	img.height=60;
+	            	
+	            	img.document=row;
+	            	img.addEventListener(MouseEvent.CLICK,imgclick);
+	            	img.addEventListener(MouseEvent.MOUSE_OVER,setCurrentImg);
+	            	img.contextMenu=menu;
+					this.addChild(img);
+				}
+				
+				
+			}
+			private function imgclick(e:MouseEvent):void{
+				//地图上显示我的标签
+				var obj:Object=e.currentTarget; 
+				var doc:XML=XML(obj.document);
+				//Alert.show(doc.toXMLString());
+				var imgfile:String=doc.@ICON;
+				var markerOptions:MarkerOptions = new MarkerOptions(); 
+				var iconPath=UrlService.getServiceUrl()+"upload/ctl_biaoji/"+imgfile;
+				var request:URLRequest = new URLRequest(iconPath); 
+				var imageLoader:Loader = new Loader(); 
+				imageLoader.load(request)
+				markerOptions.icon = imageLoader;
+		        markerOptions.tooltip =doc.@NAME; 
+		        markerOptions.iconAlignment = MarkerOptions.ALIGN_VERTICAL_CENTER+MarkerOptions.ALIGN_HORIZONTAL_CENTER; 
+				var marker:Marker = new Marker(new LatLng(doc.@X,doc.@Y), markerOptions);
+				map.setCenter(new LatLng(doc.@X,doc.@Y));
+				if(null!=this.map){
+					this.map.addOverlay(marker);
+				}else{
+					Alert.show("the map is null");
+				}
+				var win:MarketObjectWin=new MarketObjectWin();
+				win.setMate(doc);
+				
+				var options2:InfoWindowOptions = new InfoWindowOptions({
+	                customContent: win,
+	                customOffset: new Point(0, 10),
+	                
+	                drawDefaultFrame: true
+	            });
+	            
+		        marker.addEventListener(MapMouseEvent.CLICK, function(e:Event):void {
+	                marker.openInfoWindow(options2); 
+	            });
+	            marker.openInfoWindow(options2); 
+				
+				//var selWin:MarketObjectWin =MarketObjectWin(PopUpManager.createPopUp(this, MarketObjectWin, true));
+				//selWin.setMate(doc);
+			}
+			private var currentImg:ImageBrowse=null;
+			private function setCurrentImg(e:MouseEvent):void{
+				var obj:ImageBrowse=ImageBrowse(e.currentTarget); 
+				currentImg=obj;
+				var doc:XML=XML(obj.document);
+				//this.currentImg=doc;
+			}
+			
+			
+			private function showRemark():void{
+				var tdoc:XML=XML(this.currentImg.document);
+				var id:String=tdoc.@ID;
+				var physicalName=tdoc.@PHYSICAL_NAME;
+				var createId:String=tdoc.@CREATE_ID;
+				var userdoc:XML=AppShareObj.getUserDoc();
+				var userId:String=userdoc.@ID;
+				if(createId!=userId){
+					var selWin:ObjWindow =ObjWindow(PopUpManager.createPopUp(this, ObjWindow, true));
+					//selWin.setComp("ctl_biaoji");
+					var hiddenls:Array=new Array();
+					hiddenls.push("X");
+					hiddenls.push("Y");
+					//hiddenls.push("IMGFILE");
+					selWin.setHiddenLs(hiddenls);
+					selWin.setCondition("地理对象存储","ID="+id);
+					
+					selWin.showCloseButton=true;
+					
+					selWin.x=(Application.application.screen.width-selWin.width)/3;
+	                selWin.y=(Application.application.screen.height-selWin.height)/3;
+				}else{
+					var editWin:ObjEditWindow =ObjEditWindow(PopUpManager.createPopUp(this, ObjEditWindow, true));
+					//editWin.setComp("ctl_biaoji");
+					editWin.setTblKey("地理对象存储",id);
+					editWin.showCloseButton=true;
+					
+					editWin.x=(Application.application.screen.width-editWin.width)/2;
+	                editWin.y=(Application.application.screen.height-editWin.height)/2;
+				}
+				
+			}
+			private function delMarket():void{
+				var tdoc:XML=XML(this.currentImg.document);
+				
+				
+				//从数据库中删除标记数据机。
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="del";
+				doc.@TABLE="地理对象存储";
+				doc.@KEYNAME="ID";
+				doc.@ID=tdoc.@ID;
+				var tmplService:HTTPService = new HTTPService();
+				tmplService.url = UrlService.getDetailUrl();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onDelResult);
+				//Alert.show(doc.toXMLString());
+				tmplService.send(doc);
+			}
+			protected function onDelResult(e:ResultEvent):void{
+				var tmpdoc:XML=XML(e.result);
+				//Alert.show(tmpdoc.toXMLString());
+				if(!ResultFilter.filter(tmpdoc))return;
+				this.removeChild(this.currentImg);
+			}
+			private function fabuMark():void{
+				var tdoc:XML=XML(this.currentImg.document);
+				var id:String=tdoc.@ID;
+				var status:String=tdoc.@STATUS;
+				var createId:String=tdoc.@CREATE_ID;
+				var userdoc:XML=AppShareObj.getUserDoc();
+				var userId:String=userdoc.@ID;
+				if(createId!=userId){
+					Alert.show("他人共享信息不可以发布！");
+					return;
+				}else if("公开"==status){
+					Alert.show("信息已经公开！");
+					return;
+				}else if("保密"==status){
+					Alert.show("保密信息不可以发布！");
+					return;
+				}
+				var selWin:CompanyUserSel =CompanyUserSel(PopUpManager.createPopUp(this, CompanyUserSel, true));
+				selWin.setParentObj(this);
+				selWin.setMeta("分公司");
+				var hiddenls:Array=new Array();
+				
+				selWin.showCloseButton=true;
+				
+				selWin.x=(Application.application.screen.width-selWin.width)/3;
+                selWin.y=(Application.application.screen.height-selWin.height)/3;
+			}
+			public function processSel(users:Array):void{
+				var tdoc:XML=XML(this.currentImg.document);
+				
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="physicalObjFabu";
+				doc.@TYPE="1";
+				doc.@OBJ=tdoc.@ID;
+				
+				if(null==users){//physicalObjFabu
+					
+				}else{
+					var usersElt:XML=<users/>
+					for each(var user:Object in users){
+						var elt:XML=<user/>;
+						elt.@ID=user.ID;
+						usersElt.appendChild(elt);
+					}
+					doc.appendChild(usersElt);
+					var tmplService:HTTPService = new HTTPService();
+					tmplService.url = UrlService.getShapanCDSURL();
+					tmplService.contentType="application/xml";     
+					tmplService.method="POST";
+					tmplService.resultFormat = "e4x";
+					tmplService.showBusyCursor=true;
+					tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+					tmplService.addEventListener(ResultEvent.RESULT, onAddUsersResult);
+					tmplService.send(doc);
+				}
+			}
+			private function onAddUsersResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			Alert.show("发布成功！");
+			}
+		]]>
+	</mx:Script>
+</mx:Tile>

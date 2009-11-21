@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"
+	creationComplete="init();"
+	>
+	<mx:Script>
+		<![CDATA[
+			import shapan.window.MarketObjectWin;
+			import com.google.maps.MapMouseEvent;
+			import com.google.maps.InfoWindowOptions;
+			import com.google.maps.MapType;
+			import com.google.maps.MapOptions;
+			import com.google.maps.LatLng;
+			import com.google.maps.overlays.Marker;
+			import com.pioneer.http.UrlService;
+			import com.google.maps.overlays.MarkerOptions;
+			import event.list.ListClickEnent;
+			import mx.controls.Alert;
+			import view.list.ListView;
+			private function init():void{
+				
+				var searchcols:Array=new Array();
+				var obj:Object=new Object();
+				obj.code="NAME";
+				searchcols.push(obj);
+				var address:Object=new Object();
+				address.code="ADDRESS";
+				searchcols.push(address);
+				var listview:ListView=new ListView();
+				listview.setSearchCols(searchcols);
+				listview.percentWidth=35;
+				listview.tbName="公司办公地址";
+				
+				listview.setCondition("ID!=-1");
+				listview.addEventListener(ListClickEnent.rowClick,showDetail,false,0,false);
+				lsp.addChild(listview);
+			}
+			
+			private function showDetail(e:ListClickEnent):void{
+				try{
+					
+					if(null==e || null==e.key)return;
+					var row:XML=XML(e.obj);
+					//Alert.show(""+e.obj.ICON);
+					var imgfile:String=e.obj.ICON;
+					var markerOptions:MarkerOptions = new MarkerOptions(); 
+					var iconPath=UrlService.getServiceUrl()+"upload/ctl_biaoji/"+imgfile;
+					var request:URLRequest = new URLRequest(iconPath); 
+					var imageLoader:Loader = new Loader(); 
+					imageLoader.load(request)
+					markerOptions.icon = imageLoader;
+			        markerOptions.tooltip =e.obj.NAME; 
+			        markerOptions.iconAlignment = MarkerOptions.ALIGN_VERTICAL_CENTER+MarkerOptions.ALIGN_HORIZONTAL_CENTER; 
+					var marker:Marker = new Marker(new LatLng(e.obj.X,e.obj.Y), markerOptions);
+					map.setCenter(new LatLng(e.obj.X,e.obj.Y));
+					var win:MarketObjectWin=new MarketObjectWin();
+					var doc:XML=<ROW/>
+					doc.@X=e.obj.X;
+					doc.@Y=e.obj.Y;
+					doc.@PHYSICAL_NAME="公司办公地址";
+					doc.@PHYSICAL_ID=e.key;
+					win.setMate(doc);
+					
+					var options2:InfoWindowOptions = new InfoWindowOptions({
+		                customContent: win,
+		                customOffset: new Point(0, 10),
+		                
+		                drawDefaultFrame: true
+		            });
+		            
+			        marker.addEventListener(MapMouseEvent.CLICK, function(e:Event):void {
+		                marker.openInfoWindow(options2); 
+		            });
+		            this.map.addOverlay(marker); 
+		            marker.openInfoWindow(options2); 
+					
+				}catch(e:Error){
+					Alert.show(e.message);
+				}
+			}
+			
+			private function onMapPreinitialize(event:Event):void {
+	            
+				
+	            var opts:MapOptions = new MapOptions();
+	            opts.zoom = 10;
+	            opts.center = new LatLng(24.996016,113.59314);
+	            opts.mapType = MapType.NORMAL_MAP_TYPE;
+	           
+	            this.map.setInitOptions(opts);
+	        }
+		]]>
+	</mx:Script>
+	<mx:HBox width="100%" height="100%">
+		<mx:Box id="lsp" width="20%" height="100%">
+			
+		</mx:Box>
+		<mx:Box width="80%" height="100%">
+			<maps:Map xmlns:maps="com.google.maps.*" 
+			    id="map" 
+			     mapevent_mappreinitialize="onMapPreinitialize(event)"
+			    width="100%" height="100%" 
+			    key="ABQIAAAA7QUChpcnvnmXxsjC7s1fCxQGj0PqsCtxKvarsoS-iqLdqZSKfxTd7Xf-2rEc_PC9o8IsJde80Wnj4g"/>
+		</mx:Box>
+	</mx:HBox>
+</mx:Box>

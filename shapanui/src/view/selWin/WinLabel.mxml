@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Label xmlns:mx="http://www.adobe.com/2006/mxml"
+	creationComplete="init();"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Style>
+		.mylabel{
+			font-weight:bold;
+			color:#ff0000;	
+		}
+	</mx:Style>
+	<mx:Script>
+		<![CDATA[
+			import mx.core.Application;
+			import view.selWin.ObjWindow;
+			import view.selWin.SelWindow;
+			import mx.managers.PopUpManager;
+		/***/
+			import mx.controls.Alert;
+			import mx.utils.XMLUtil;
+			
+			public var code:String=null;
+			public var mate:XML=null;
+			public var row:XML=null;
+			private function init():void{
+				//this.styleName="label";
+			}
+			public function setInfo(row:XML):void{
+				this.row=row;
+				if(null!=row){
+					var nameVal=XMLUtil.getAttributeByQName(row,new QName("NAME"));
+					var leveltype:String=XMLUtil.getAttributeByQName(row,new QName("LEVELTYPE"));
+					this.text=nameVal;
+					if("紧急"==leveltype){
+						//Alert.show("紧急");
+						this.styleName="mylabel";
+						this.styleName="redlabel";
+						
+					}
+					
+				}
+				
+				
+				this.addEventListener(MouseEvent.CLICK ,showDetail);
+			}
+			private function showDetail(e:MouseEvent):void{
+			try{
+				var id=this.row.@ID;
+				var selWin:ObjWindow =ObjWindow(PopUpManager.createPopUp(this, ObjWindow, true));
+				selWin.styleName="label";
+				var nameVal=this.row.@NAME
+				selWin.title=nameVal;
+				selWin.setCondition("及时信息","ID="+id);
+				selWin.showCloseButton=true;
+				
+				selWin.width=600;
+				selWin.height=400;
+				var point2:Point = new Point();
+				point2=this.localToGlobal(point2);
+				selWin.x=(Application.application.screen.width-selWin.width)/2;
+                selWin.y=(Application.application.screen.height-selWin.height)/2;
+			}catch(e:Error){
+				Alert.show("fkLabel:"+e.message);
+			}
+			
+		}
+			
+		]]>
+	</mx:Script>
+</mx:Label>

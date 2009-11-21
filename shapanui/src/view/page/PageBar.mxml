@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" 
+	 height="100%"
+	 width="100%"
+	
+	creationComplete="initComp();"
+	horizontalGap="2" verticalGap="0"
+	horizontalAlign="center"
+	>
+	<mx:Script>
+		<![CDATA[
+			import mx.messaging.management.Attribute;
+			import mx.utils.XMLUtil;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.controls.Alert;
+			public var xmlData:XML=null;
+			private var dg:DataGrid = null;//用来展示数据的视图
+			private var mPageIndex:int=1;
+			public var keyName:String=null;
+			
+			private var lineNum:int=0;//数据条数
+			public var lineNumOfPage:int=10;//每页的条数
+			private var pageNum:int=0;//页数
+			private var currentPage:int=1;//当前要显示的页数
+			private var startIndex=0;//开始索引
+			private var endIndex=10;//结束索引
+			private var selpages:Array = new Array();
+			
+			
+			public var columsArray:Array=null;
+			
+			private function initComp():void{
+				
+				
+			}
+			public function setXMLData(xmlData1:XML,dg:DataGrid):void{
+				this.dg=dg;
+				this.xmlData=xmlData1;
+				initPageCtl();
+				addColumHead();
+			}
+			
+			public function setRow(row:XML):void{
+				var rowsObjs=this.xmlData.TABLEDATA.ROWDATA;
+				var rowsObj:XML=rowsObjs[0];
+				rowsObj.appendChild(row);
+				initPageCtl();
+			}
+			public function editRow(row:XML):void{
+				var keyVal:String=row.@[this.keyName];
+				var oldRow:XML=this.findById(keyVal);
+				if(null!=oldRow){
+					var mc2List:XMLList=xmlData.METADATA.TABLE.FIELD;
+					for each(var col:XML in mc2List){
+						var colName=col.@NAME;
+						var colCode=col.@REMARK;
+						if(this.keyName==colName)continue;
+						var dp=col.@DP;
+						if(1!=dp) continue;
+						var newVal:String=row.@[colName];
+						if(null!=newVal){
+							oldRow.@[colName]=newVal;
+						}
+					}
+				}
+				initPageCtl();
+				//Alert.show(oldRow.toXMLString());
+			}
+			
+			private function findById(keyval:String):XML{
+				var rt:XML=null;
+					try{
+						var datarows:XMLList=this.xmlData.TABLEDATA.ROWDATA.ROW;
+						//for each(var col:XML in mcrows){
+						for each( var data:XML in datarows){
+							if( data.@[this.keyName]==keyval){
+								rt=data;
+								break;
+							}
+						}
+					}catch(e:Error){
+												
+					}
+					return rt;
+			}
+			private function findNodeById(keyval:String):XMLNode{
+				var rt:XMLNode=null;
+					try{
+						var datarows:XMLList=this.xmlData.TABLEDATA.ROWDATA.ROW;
+						//Alert.show(datarows.length());
+						for each( var data:XMLNode in datarows){
+							if( data.@[this.keyName]==keyval){
+								rt=data;
+								break;
+							}
+						}
+					}catch(e:Error){
+												
+					}
+					return rt;
+			}
+			
+			public function delRow(keyval:String):void{
+				//Alert.show(this.xmlData.toXMLString());
+				try{
+						var datarows:XMLList=this.xmlData.TABLEDATA.ROWDATA.ROW;
+						var i=0;
+						for each( var data:XML in datarows){
+							if( data.@[this.keyName]==keyval){
+								
+								delete this.xmlData.TABLEDATA.ROWDATA.ROW[i];
+								break;
+							}
+							i++;
+						}
+					}catch(e:Error){
+							Alert.show(e.message);					
+					}
+					//Alert.show(this.xmlData.toXMLString());
+					initPageCtl();
+			}
+			
+			private function initPageCtl():void{
+				if(null!=this.xmlData){
+					try{
+						var datarows:XMLList=this.xmlData.TABLEDATA.ROWDATA.ROW;
+						if(datarows.length()>0){
+							this.lineNum=datarows.length();
+							this.pageNum=this.lineNum/this.lineNumOfPage;
+							if(this.lineNum%this.lineNumOfPage!=0)
+								this.pageNum++;
+								
+							for(var i:int =1;i<=pageNum;i++)
+			                {
+			                       this.selpages.push( {label:i.toString()+"/"+pageNum.toString(), data:i});
+			                }
+			                this.c_select.dataProvider=this.selpages;
+							buttonCtl();
+							getShowData();
+						}
+					}catch(e:Error){
+						
+					}
+							
+					
+					
+				}
+				
+				
+			}
+			//控制按钮是否可用
+			private function buttonCtl():void{
+				if(mPageIndex<this.pageNum){
+					this.c_r.enabled=true;
+					this.c_re.enabled=true;
+				}else{
+					this.c_r.enabled=false;
+					this.c_re.enabled=false;
+				}
+				
+				if(mPageIndex>1){
+					this.c_le.enabled=true;
+					this.c_l.enabled=true;
+				}else{
+					this.c_l.enabled=false;
+					this.c_le.enabled=false;
+				}
+				c_select.selectedIndex= mPageIndex-1;
+			}
+			
+			public function toPrevious():void
+             {
+             		
+                    mPageIndex=mPageIndex-1;
+                    getShowData();
+             }
+             public function toFirst():void
+             {
+                    mPageIndex =0;
+                    getShowData();
+             }
+
+             public function toNext():void
+             {
+                    mPageIndex=mPageIndex+1;
+                    //SetState();
+                    getShowData();
+             }
+
+             public function toLast():void
+             {
+                    mPageIndex=this.pageNum-1;
+                    getShowData();
+             }
+
+             public function pageSelect():void
+             {
+             		
+                    mPageIndex = c_select.selectedItem.data;
+                    getShowData();
+             }
+             public function getShowData():void{
+             	//get data
+             	calculateStartEndIndex();
+             	buttonCtl();
+             	var ls:Array=this.getShowList();
+             	//Alert.show("ls.length="+ls.length);
+             	//Alert.show("this.mPageIndex="+this.mPageIndex+":this.startIndex="+this.startIndex+":this.endIndex="+this.endIndex);
+             }
+             //添加列表的头
+             private function addColumHead():void{
+             	columsArray=new Array();
+             	var mc2List:XMLList=xmlData.METADATA.TABLE.FIELD;
+             	//处理主键
+             	this.keyName=xmlData.METADATA.TABLE.KEYS.KEY.@NAME;
+             	var column1:DataGridColumn= new DataGridColumn();
+             	column1.dataField="seq";
+				column1.headerText="编号";
+				column1.width=35;
+				columsArray.push(column1);
+             	for each(var col:XML in mc2List){
+					var colName:String=col.@NAME;
+					var colCode:String=col.@REMARK;
+					if(this.keyName==colName)continue;
+					var dp=col.@DP;
+					if(1!=dp) continue;
+					if("CODE"==colName)continue;
+					if("X"==colName)continue;
+					if("Y"==colName)continue;
+					if("ICON"==colName)continue;
+					var column2:DataGridColumn= new DataGridColumn();
+					column2.dataField=colName;
+					column2.headerText=colCode;
+					//dg.columns.push(column2);
+					columsArray.push(column2);
+				}
+				this.dg.columns=columsArray;
+					//this.dg.selectedIndex=0;
+				
+             }
+             
+             public function clear():void{
+             	columsArray=new Array();
+             	if(null!=this.dg){
+             		this.dg.columns=columsArray;
+             		this.dg.dataProvider=null;
+             	}
+             	
+             }
+             private function getShowList():Array{
+             	var ls:Array=new Array();
+             	var datarows:XMLList=xmlData.TABLEDATA.ROWDATA.ROW;
+             	var mcrows:XMLList=xmlData.METADATA.TABLE.FIELD;
+             	//找到主键的名称
+             	this.keyName=xmlData.METADATA.TABLE.KEYS.KEY.@NAME;
+             	//Alert.show(keyName);
+             	for(var i:int=this.startIndex;i<this.endIndex;i++){
+             		var obj:Object=new Object();
+             		//处理关键子
+             		if(null!=keyName){
+             			obj[keyName]=XMLUtil.getAttributeByQName(datarows[i],new QName(keyName));
+             			
+             		}
+             		obj["seq"]=(i+1).toString();
+             		//处理要显示的列
+             		for each(var col:XML in mcrows){
+						var colName:String=col.@NAME;
+						var dp=col.@DP;
+						if(0==dp) continue;
+						var val=XMLUtil.getAttributeByQName(datarows[i],new QName(colName));
+						obj[colName]=val;
+					}
+             		
+             		ls.push(obj);
+             	}
+             	this.dg.dataProvider=ls;
+             	return ls;
+             }
+             //计算开始结束坐标
+             private function calculateStartEndIndex():void{
+             	this.startIndex=(this.mPageIndex-1)*this.lineNumOfPage;
+             	this.endIndex=this.startIndex+this.lineNumOfPage;
+             	if(this.endIndex>this.lineNum)
+             		this.endIndex=this.lineNum;
+             }
+             
+             public function existByKey(keyVal:String):Boolean{
+             	var datarows:XMLList=xmlData.TABLEDATA.ROWDATA.ROW;
+             	var mcrows:XMLList=xmlData.METADATA.TABLE.FIELD;
+             	//找到主键的名称
+             	this.keyName=xmlData.METADATA.TABLE.KEYS.KEY.@NAME;
+             	for(var i:int=0;i<datarows.length();i++){
+             		var val:String=XMLUtil.getAttributeByQName(datarows[i],new QName(keyName));
+             		if(keyVal==val)return true;
+             	}
+             	return false;
+             }
+		]]>
+	</mx:Script>
+	
+	
+	<mx:Button click="toFirst()"  id="c_le" enabled="false" fontFamily="Georgia" width="24" height="24" minWidth="24" minHeight="24">
+              <mx:icon>@Embed('./first.gif')</mx:icon>
+       </mx:Button>
+       <mx:Button click="toPrevious()" id="c_l" enabled="false"  fontFamily="Georgia" width="24" height="24" minWidth="24" minHeight="24">
+               <mx:icon>@Embed('./pre.gif')</mx:icon>
+       </mx:Button>
+       <mx:ComboBox rowCount="10" change="pageSelect()" id="c_select" enabled="true" x="74" y="10" width="59"></mx:ComboBox>
+       <mx:Button click="toNext()" id="c_r" enabled="false"  fontFamily="Georgia" width="24" height="24" minWidth="24" minHeight="24">
+              <mx:icon>@Embed('./next.gif')</mx:icon>
+       </mx:Button>
+       <mx:Button click="toLast()" id="c_re" enabled="false"  fontFamily="Georgia" width="24" height="24" minWidth="24" minHeight="24">
+               <mx:icon>@Embed('./last.gif')</mx:icon>
+       </mx:Button>
+       
+</mx:HBox>

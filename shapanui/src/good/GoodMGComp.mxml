@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"
+	creationComplete="init();"
+	 xmlns:component="component.*"
+	 xmlns:object="view.tree.*"
+	xmlns:local="*" xmlns:good="good.*"
+	
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import view.list.ListObjMG;
+			import good.GoodSearch;
+			import view.tree.TreeObjectMG;
+			import mx.controls.TabBar;
+			import mx.containers.Box;
+			import mx.events.ItemClickEvent;
+			import mx.controls.Alert;
+			import event.tree.TreeEvent;
+			
+			
+			private var typegood:TypeGood=null;//类型浏览商品
+			private var goodSearch:GoodSearch=null;//商品搜索
+			private var alertGood:GoodListChart=null;//报警商品
+			private var dayLazyeGood:GoodListChart=null;//昨天滞销商品
+			private var monthLazyeGood:GoodListChart=null;//近期滞销商品
+			private var outdayAlertGood:ListObjMG=null;
+			private var goodChart:GoodChart=null;
+			private var spending:SpendingMG=null;
+			private var typeMg:TreeObjectMG=null;//商品类别管理
+			private var areaMg:TreeObjectMG=null;//地域管理
+			private var shopStatus:ShopStatus=null;
+			private var moreMg:MoreMg=null;
+			private function init():void{
+//				地域树的初始化
+				
+				if(null==shopStatus){
+					this.shopStatus=new ShopStatus();
+					shopstatusp.addChild(this.shopStatus);
+				}
+			}
+			private function stackClick(e:ItemClickEvent):void{
+				var box:TabBar=TabBar(e.target);
+				var index=box.selectedIndex;
+				if(0==index){//商品类型
+					
+					if(null==shopStatus){
+						this.shopStatus=new ShopStatus();
+						shopstatusp.addChild(this.shopStatus);
+					}
+				}else if(1==index){//地域类型
+					if(null==typegood){
+						typegood=new TypeGood();
+						typegood.percentWidth=100;
+						typegood.setMeta("类型","商品","goodlogo");
+						typegoodp.addChild(typegood);
+					}
+					
+					
+				}else if(2==index){//商品信息
+					if(null==this.goodSearch){
+						this.goodSearch=new GoodSearch();
+						goodSearch.percentWidth=100;
+						goodsearchp.addChild(this.goodSearch);
+					}
+					this.goodSearch.setTextFocus();
+					
+				}else if(3==index){
+					
+					if(null==this.alertGood){
+						try{
+							this.alertGood=new GoodListChart();
+							alertGood.percentWidth=90;
+							alertGoodp.addChild(this.alertGood);
+							this.alertGood.setMeta("商品","good","ALERT_NUMBER>=NUMBER");
+								
+						}catch(e:Error){
+							
+						}
+						
+					}
+				}else if(4==index){//昨天滞销商品
+					
+					if(null==this.dayLazyeGood){
+						var now:Date=new Date();
+						now.setDate(now.getDate()-1);
+						var yestoday=this.getDateStr(now);
+						this.dayLazyeGood=new GoodListChart();
+						daylazyep.addChild(this.dayLazyeGood);
+						dayLazyeGood.percentWidth=100;
+						//Alert.show("code in(select t_good.code from t_good,t_sale_list where t_good.code=t_sale_list.code and saledate="+yestoday+" and t_good.DAY_LAZYE>=t_sale_list.saleNumber)");
+						this.dayLazyeGood.setMeta("商品","good","code in(select t_good.code from t_good right outer join t_sale_list on  (t_good.code=t_sale_list.code   and saledate="+yestoday+" and t_good.DAY_LAZYE>=t_sale_list.saleNumber) union select code from t_good where code not in(select code from t_sale_list where saledate="+yestoday+")) and day_lazye is not null");
+						
+					}
+				}else if(5==index){//近期滞销报警
+					if(null==this.monthLazyeGood){
+						var now:Date=new Date();
+						var endDate=this.getDateStr(now);
+						now.setMonth(now.getMonth()-1,now.getDate());
+						var startDate=this.getDateStr(now);
+						this.monthLazyeGood=new GoodListChart();
+						monthlazyep.addChild(this.monthLazyeGood);
+						monthLazyeGood.percentWidth=100;
+						this.monthLazyeGood.setMeta("商品","good","code in (select gg.code from t_good gg ,(select code, sum(saleNumber) sumsale from t_sale_list where saledate>="+startDate+" and saledate<="+endDate+" group by code) ss where gg.code=ss.code and gg.MONTH_LAZYE>ss.sumsale union select code from t_good where code not in(select code from t_sale_list where saledate>="+startDate+" and saledate<="+endDate+") and MONTH_LAZYE is not null) ");
+						
+					}
+					
+				}else if(6==index){//过期报警
+					//显示详细信息
+					/**
+					if(null==this.outdayAlertGood){
+						this.outdayAlertGood=new ListObjMG();
+						outdayAlertGood.percentWidth=100;
+						this.outdayAlertGood.setMeta("商品","good","outdate is not null and DATEDIFF(OUTDATE,CURRENT_DATE())<=BEFOREALERT");
+						outdayp.addChild(outdayAlertGood);
+					}
+					 * **/
+					//显示市场表现图表
+					var now:Date=new Date();
+					var endDate=this.getDateStr(now);
+					now.setMonth(now.getMonth()-1,now.getDate());
+					var startDate=this.getDateStr(now);
+					var outdayChart:GoodListChart=new GoodListChart();
+					outdayp.removeAllChildren();
+					outdayp.addChild(outdayChart);
+					
+					//monthlazyep.addChild(this.monthLazyeGood);
+					outdayp.percentWidth=98;
+					outdayChart.setMeta("商品","good","outdate is not null and DATEDIFF(OUTDATE,CURRENT_DATE())<=BEFOREALERT");
+						
+					
+				}else if(7==index){
+					
+					if(null==this.goodChart){
+						this.goodChart=new GoodChart();
+						goodchartp.addChild(this.goodChart);
+					}
+					
+					
+				}
+				else if(8==index){
+					if(null==moreMg){
+						this.moreMg=new MoreMg();
+						parametersetId.addChild(this.moreMg);
+					}
+					
+					
+					
+				}
+				
+
+			}
+			
+			private function getDateStr(now:Date):String{
+				
+				var year:int=now.getFullYear();
+				var m:int=now.getMonth();
+				m++;
+				var mstr:String="";
+				if(m<10)
+				mstr="0"+m;
+				else
+				mstr=""+m;
+				
+				var day:int=now.getDate();
+				var dayStr:String="";
+				if(day<10){
+					dayStr="0"+day;
+				}else{
+					dayStr=""+day;
+				}
+				var dateStr:String=year+ mstr+dayStr;
+				return dateStr;
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%" height="100%">
+		<mx:Box>
+			<mx:TabBar width="100%" selectedTabTextStyleName="selectedTab" alpha="2.0" styleName="tabStyle" dataProvider="goodviewstack" itemClick="stackClick(event)"/>
+		</mx:Box>
+		<mx:Box width="100%" height="100%">
+			<mx:ViewStack click=""  id="goodviewstack" width="100%" height="100%" alpha="0.5">
+				
+				<mx:Box id="shopstatusp" label="运营情况" width="100%" height="100%">
+					
+				</mx:Box>
+				<mx:Box id="typegoodp" label="商品浏览" width="100%" height="100%">
+					
+				</mx:Box>
+				<mx:Box id="goodsearchp" label="商品检索" width="100%" height="100%">
+					
+				</mx:Box>
+				<mx:Box id="alertGoodp" label="存货报警" width="100%" height="100%">
+					
+				</mx:Box>
+				<mx:Box id="daylazyep" label="昨天滞销" width="100%" height="100%">
+					
+				</mx:Box>
+				<mx:Box id="monthlazyep" label="近期滞销" width="100%" height="100%">
+					
+				</mx:Box>
+				<mx:Box id="outdayp" label="过期警告" width="100%" height="100%">
+					
+				</mx:Box>
+				<mx:Box id="goodchartp" label="市场表现" width="100%" height="100%">
+					
+				</mx:Box>
+				
+				<mx:Box id="parametersetId" label="更多" width="100%" height="100%">
+					
+				</mx:Box>
+			</mx:ViewStack>
+		</mx:Box>
+	</mx:VBox>
+</mx:Box>

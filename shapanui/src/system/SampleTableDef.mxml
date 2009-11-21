@@ -1,0 +1,821 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml"
+	 width="100%" height="100%" xmlns:system="system.*" xmlns:list="view.list.*"
+	 creationComplete="init();"
+	 styleName="label"
+	 >
+	 <mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+			import com.google.maps.overlays.OverlayBase;
+			import mx.events.ItemClickEvent;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import com.ResultFilter;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.http.mxml.HTTPService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import event.list.ListClickEnent;
+			import mx.controls.Alert;
+			
+			
+			private var currentTable:String=null;
+			
+			private function init():void{
+				//getColTypeTmpl();
+			}
+			
+			
+			//显示表的列
+			private function showDetail(e:ListClickEnent):void{
+				if(null==e.obj)return;
+				tabbarid.selectedIndex=0;
+				colEditClear();
+				this.currentTable=e.obj["NAME"];
+				showTableInfo();
+				var qdoc:XML=<DATAPACKET/>
+				qdoc.@TABLE=this.currentTable;
+				qdoc.@ACTION="detail";
+				qdoc.@CONDITION=null;
+				var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getListUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onDataResult);
+				dataService.send(qdoc);
+			}
+			
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("网络连接错误，请重试！");
+			}
+			
+			
+			private var dataaArr:Array=null;
+			
+			private function onDataResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			//Alert.show(data.toXMLString());
+			
+			var keyName:String=data.METADATA.TABLE.KEYS.KEY.@NAME;
+			var mc2List:XMLList=data.METADATA.TABLE.FIELD;
+			
+			var columsArray:Array=new Array();
+			var column1:DataGridColumn= new DataGridColumn();
+             	column1.dataField="NAME";
+				column1.headerText="编码";
+				column1.width=50;
+				
+			
+			var column2:DataGridColumn= new DataGridColumn();
+             	column2.dataField="REMARK";
+				column2.headerText="名称";
+				column2.width=50;
+				
+				var column3:DataGridColumn= new DataGridColumn();
+             	column3.dataField="TYPE";
+				column3.headerText="类型";
+				column3.width=50;
+				columsArray.push(column2);
+				columsArray.push(column1);
+				//columsArray.push(column3);
+				
+				colsgrid.columns=columsArray;
+				//组织显示数据
+				 dataaArr=new Array();
+				for each(var col:XML in mc2List){
+					var colName:String=col.@NAME;
+					var colCode:String=col.@REMARK;
+					if(keyName==colName)continue;
+					
+					if("X"==colName || "Y"==colName || "SCORE"==colName || "PID"==colName)continue;
+					var obj:Object=new Object();
+					obj["NAME"]=colName;
+					obj["REMARK"]=col.@REMARK;
+					obj["TYPE"]=col.@TYPE;
+					obj["SIZE"]=col.@SIZE;
+					obj["ISFK"]=col.@ISFK;
+					obj["FKTBL"]=col.@FKTBL;
+					obj["WIDTH"]=col.@WIDTH;
+					obj["HEIGHT"]=col.@HEIGHT;
+					obj["LABELWIDTH"]=col.@LABELWIDTH;
+					obj["UNIT"]=col.@UNIT;
+					obj["FREQUENCY"]=col.@FREQUENCY;
+					//
+					dataaArr.push(obj);
+				}
+				
+				colsgrid.dataProvider=dataaArr;
+				colsgrid.selectedIndex=0;
+				showObjDetail();
+		}
+		
+		private function colsgridFresh():void{
+			colsgrid.dataProvider=colsgrid.dataProvider;
+		}
+		private function colsgridDel(obj:Object):void{
+			//var ls:Array=Array(colsgrid.dataProvider);
+			var newls:Array=new Array();
+			for each(var tobj in dataaArr){
+				if(obj!=tobj){
+					newls.push(tobj);
+				}
+			}
+			colsgrid.dataProvider=newls;
+			this.dataaArr=newls;
+			colsgrid.selectedIndex=0;
+			showObjDetail();
+		}
+		private function colsgridAdd(obj:Object):void{
+			this.dataaArr.push(obj);
+			
+			
+			colsgrid.dataProvider=this.dataaArr;
+			colsgrid.selectedIndex=0;
+			showObjDetail();
+		}
+		
+		private function showObjDetail():void{
+			
+				//showListDef.ldxml=null;
+			
+			var obj:Object=colsgrid.selectedItem;
+			if(null==obj)return;
+			colName.text=obj["REMARK"];
+			colCode.text=obj["NAME"];
+			//this.frequencyid.text=obj["FREQUENCY"];
+			size.text=obj["SIZE"];
+			this.setType(obj["TYPE"]);
+			this.setUnit(obj["UNIT"]);
+			if("varchar"==obj["TYPE"] || "int"==obj["TYPE"]){
+				columValueset.visible=true;
+				
+				columValueset.setSelColumn(obj["NAME"]);
+				columValueset.tblName=this.currentTable;
+				columValueset.setCondition("TABLE_NAME='"+this.currentTable+"' and COLUMN_NAME='"+obj["NAME"]+"'");
+			}else{
+				columValueset.visible=false;
+			}
+			
+//			更新，插入时间列不可以修改
+				if("UPDATE_TIME"==colCode.text || "CREATE_TIME"==colCode.text){
+					this.typecomb.editable=false;
+					
+					this.size.enabled=false;
+				}else{
+					this.typecomb.editable=true;
+					this.size.enabled=true;
+				}
+			
+		}
+		private function setType(type:String):void{
+			for each( var obj:Object in arr){
+			
+				var code:String=obj["code"];
+				if(type==code){
+					typecomb.selectedItem=obj;
+					break;
+				}
+			}
+		}
+		private function setUnit(unit:String):void{
+			for each( var obj:Object in this.unitarr){
+			
+				var tunit:String=obj["label"];
+				if(tunit==unit){
+					this.unitcomb.selectedItem=obj;
+					return;
+				}
+			}
+			unitcomb.selectedIndex=0;
+		}
+		private var showListDef:ShowListDef=null;
+		private var fkDef:FKDef=null;
+		private var colunvalue:ColumnValue=null;
+		private function stackClick(e:ItemClickEvent):void{
+				var box:TabBar=TabBar(e.target);
+				var index=box.selectedIndex;
+				if(1==index){
+					
+					
+					if(null==showListDef){
+						showListDef=new ShowListDef();
+						//owListdefp.removeAllChildren();
+						showListdefp.addChild(showListDef);
+						
+					}
+					
+					//showListDef.ldxml=null;
+					showListDef.tblName=this.currentTable;
+					showListDef.setCondition("TABLE_NAME='"+this.currentTable+"'");
+					
+				}else if(2==index){
+					if(null==fkDef){
+						fkDef=new FKDef();
+						fkdefp.addChild(fkDef);
+						
+					}
+					
+					//showListDef.ldxml=null;
+					fkDef.tblName=this.currentTable;
+					fkDef.setCondition("TABLE_NAME='"+this.currentTable+"'");
+				}else if(3==index){
+					/**
+					if(null==colunvalue){
+						colunvalue=new ColumnValue();
+						cvaluedefp.addChild(colunvalue);
+					}
+					
+					//showListDef.ldxml=null;
+					colunvalue.tblName=this.currentTable;
+					colunvalue.setCondition("TABLE_NAME='"+this.currentTable+"'");
+					**/
+				}
+				
+//				cvaluedefp
+		}
+		private function colEditClear():void{
+			colName.text='';
+			colCode.text='';
+			
+			size.text='';
+		}
+		
+		
+		
+		private function typeChange():void{
+			var obj:Object=colsgrid.selectedItem;
+			var oldType:String=obj["TYPE"];
+			var newObj:Object=typecomb.selectedItem;
+			var newType:String=newObj["code"];
+			if(oldType=="date" || oldType=="image" || oldType=="file" || oldType=="password"){
+				if(newType=="date" || newType=="image" || newType=="file"){
+					//修改类型
+					editType(this.currentTable,colCode.text,newType,size.text);
+				}else{
+					//删除类型
+					delType(this.currentTable,colCode.text);
+				}
+			}else{
+				if(newType=="date" || newType=="image" || newType=="file" || oldType=="password"){
+					//新增类型
+					addType(this.currentTable,colCode.text,newType,size.text);
+				}else{
+					//普通数据类型内部转化，不用修改自定义类型。
+				}
+			}
+		}
+		private function addType(tblname:String ,colName:String ,type:String,size:String):void{
+			var xml:XML=<DATAPACKET/>
+			xml.@ACTION="col_type_add";
+			xml.@TABLE=tblname;
+			xml.@COLUMN=colName;
+			xml.@TYPE=type;
+			
+			var dataService:HTTPService = new HTTPService();
+			dataService.url = UrlService.getSystemDefUrl();
+			dataService.contentType="application/xml";     
+			dataService.method="POST";
+			dataService.resultFormat = "e4x";
+			dataService.showBusyCursor=true;
+			dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+			dataService.addEventListener(ResultEvent.RESULT, onTYPEADDResult);
+			dataService.send(xml);
+			
+		}
+		private function onTYPEADDResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			//Alert.show("添加成功！");
+			var obj:Object=colsgrid.selectedItem;
+			
+			var newObj:Object=typecomb.selectedItem;
+			obj["TYPE"]=newObj["code"];
+			colsgridFresh();
+		}
+		private function delType(tblname:String ,colName:String):void{
+			var xml:XML=<DATAPACKET/>
+			xml.@ACTION="col_type_del";
+			xml.@TABLE=tblname;
+			xml.@COLUMN=colName;
+			var dataService:HTTPService = new HTTPService();
+			dataService.url = UrlService.getSystemDefUrl();
+			dataService.contentType="application/xml";     
+			dataService.method="POST";
+			dataService.resultFormat = "e4x";
+			dataService.showBusyCursor=true;
+			dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+			dataService.addEventListener(ResultEvent.RESULT, onTYPDelResult);
+			dataService.send(xml);
+		}
+		private function onTYPDelResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			//Alert.show("删除成功！");
+			var obj:Object=colsgrid.selectedItem;
+			
+			var newObj:Object=typecomb.selectedItem;
+			obj["TYPE"]=newObj["code"];
+			colsgridFresh();
+		}
+		private function editType(tblname:String ,colName:String ,type:String,size:String):void{
+			var xml:XML=<DATAPACKET/>
+			xml.@ACTION="col_type_edit";
+			xml.@TABLE=tblname;
+			xml.@COLUMN=colName;
+			xml.@TYPE=type;
+			xml.@SIZE=size;
+			var dataService:HTTPService = new HTTPService();
+			dataService.url = UrlService.getSystemDefUrl();
+			dataService.contentType="application/xml";     
+			dataService.method="POST";
+			dataService.resultFormat = "e4x";
+			dataService.showBusyCursor=true;
+			dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+			dataService.addEventListener(ResultEvent.RESULT, onTYPEditResult);
+			dataService.send(xml);
+		}
+		private function onTYPEditResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			//Alert.show("修改成功！");
+			var obj:Object=colsgrid.selectedItem;
+			
+			var newObj:Object=typecomb.selectedItem;
+			obj["TYPE"]=newObj["code"];
+			colsgridFresh();
+		}
+		private function saveEdit():void{
+			//Alert.show("根据内容，修改表/要新建servlet 用于alter 表");
+			
+			var name:String=colName.text;
+			if(null==name || ""==name){
+				Alert.show("列名称不能为空！");
+				return ;
+			}
+			var code:String=colCode.text;
+			if(null==code || ""==code){
+				Alert.show("列名称不能为空！");
+				return ;
+			}
+			
+			var size:String=size.text;
+			var intSize:Number=Number(size);
+			if(isNaN(intSize)){
+				Alert.show("类型长度必须是整数！");
+			}
+			//保存数据类型的时候，如果是普通数据类型，直接保存，
+			//把自定义类型转换为varchar类型。date转换为int
+			var obj:Object=colsgrid.selectedItem;
+			//colCode.text=obj["NAME"];
+			var newObj:Object=typecomb.selectedItem;
+			var newType:String=newObj["code"];
+			
+			var xml:XML=<DATAPACKET/>;
+			xml.@ACTION="table_col_edit";
+			xml.@TABLE=this.currentTable;
+			xml.@REMARK=this.colName.text;
+			xml.@OLDCOLUMN=obj["NAME"];
+			xml.@NEWCOLUMN=colCode.text;
+			xml.@TYPE=newType;
+			xml.@SIZE=this.size.text;
+			var dataService:HTTPService = new HTTPService();
+			dataService.url = UrlService.getSystemDefUrl();
+			dataService.contentType="application/xml";     
+			dataService.method="POST";
+			dataService.resultFormat = "e4x";
+			dataService.showBusyCursor=true;
+			dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+			dataService.addEventListener(ResultEvent.RESULT, onColEditResult);
+			dataService.send(xml);
+		}
+		private function onColEditResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			//Alert.show("修改成功！");
+			typeChange();
+			var obj:Object=colsgrid.selectedItem;
+			
+			var newObj:Object=typecomb.selectedItem;
+			obj["TYPE"]=newObj["code"];
+			obj["REMARK"]=colName.text;
+			obj["NAME"]=colCode.text;
+			obj["SIZE"]=this.size.text;
+			Alert.show("修改成功！");
+			
+			var obj:Object=colsgrid.selectedItem;
+			var oldType:String=obj["TYPE"];
+			var newObj:Object=typecomb.selectedItem;
+			var newType:String=newObj["code"];
+			if(oldType=="date" || oldType=="image" || oldType=="file" || oldType=="password"){
+				if(newType=="date" || newType=="image" || newType=="file"){
+					//修改类型
+				}else{
+					//删除类型
+				}
+			}else{
+				if(newType=="date" || newType=="image" || newType=="file" || oldType=="password"){
+					//新增类型
+				}else{
+					//普通数据类型内部转化，不用修改自定义类型。
+					this.colsgridFresh();
+				}
+			}
+			
+			
+		}
+		
+		private function delCol():void{
+			var obj:Object=colsgrid.selectedItem;
+			if(null==obj){
+				Alert.show("请选择要删除的列");
+				return;
+			}
+			var xml:XML=<DATAPACKET/>;
+			xml.@ACTION="table_col_del";
+			xml.@TABLE=this.currentTable;
+			xml.@COLUMN=obj["NAME"];
+			var dataService:HTTPService = new HTTPService();
+			dataService.url = UrlService.getSystemDefUrl();
+			dataService.contentType="application/xml";     
+			dataService.method="POST";
+			dataService.resultFormat = "e4x";
+			dataService.showBusyCursor=true;
+			dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+			dataService.addEventListener(ResultEvent.RESULT, onColDelResult);
+			dataService.send(xml);
+		}
+		private function onColDelResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			//Alert.show("修改成功！");
+			var obj:Object=colsgrid.selectedItem;
+			var oldtype:String=obj["TYPE"];
+			if(oldtype=="date" || oldtype=="image" || oldtype=="file" || oldtype=="password"){
+				delType(this.currentTable,obj["NAME"]);
+			}
+			colsgridDel(obj);
+		}
+		private function openAddColWin():void{
+			var selWin:AddColWin =AddColWin(PopUpManager.createPopUp(this, AddColWin, false));
+				selWin.title="添加新列";
+				selWin.setParentBox(this);
+				//selWin.setMeta(this.tblName);
+				var point2:Point = new Point();
+				point2=addbtn.localToGlobal(point2);
+				selWin.x=point2.x+15;
+                selWin.y=point2.y+5;
+		}
+		 public function addCol(colName:String,remark:String,type:String,size:String):void {
+			
+			
+			var xml:XML=<DATAPACKET/>;
+			xml.@ACTION="table_col_add";
+			xml.@TABLE=this.currentTable;
+			xml.@COLUMN=colName;
+			xml.@REMARK=remark;
+			xml.@TYPE=type;
+			xml.@SIZE=size;
+			
+			var dataService:HTTPService = new HTTPService();
+			dataService.url = UrlService.getSystemDefUrl();
+			dataService.contentType="application/xml";     
+			dataService.method="POST";
+			dataService.resultFormat = "e4x";
+			dataService.showBusyCursor=true;
+			dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+			dataService.addEventListener(ResultEvent.RESULT, onColAddResult);
+			dataService.send(xml);
+		}
+		private function onColAddResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			var obj:Object=new Object();
+			obj["REMARK"]=data.@REMARK;
+			obj["NAME"]=data.@COLUMN;
+			
+			obj["SIZE"]=data.@SIZE;
+			obj["TYPE"]=data.@TYPE;
+			
+			colsgridAdd(obj);
+			//Alert.show("修改成功！");
+			//var obj:Object=colsgrid.selectedItem;
+			//var oldtype:String=obj["TYPE"];
+			//if(oldtype=="date" || oldtype=="image" || oldtype=="file" || oldtype=="password"){
+				//delType(this.currentTable,obj["NAME"]);
+			//}
+			//colsgridDel(obj);
+		}
+		private function dataTypeChange():void{
+			var newObj:Object=typecomb.selectedItem;
+			var newType:String=newObj["code"];
+			if("varchar"==newType){
+				this.size.text="30";
+			}else if("password"==newType){
+				this.size.text="30";
+			}else if("password"==newType){
+				this.size.text="30";
+			}else if("int"==newType){
+				this.size.text="10";
+			}else if("float"==newType){
+				this.size.text="13";
+			}else if("date"==newType){
+				this.size.text="10";
+			}else if("image"==newType){
+				this.size.text="100";
+			}else if("file"==newType){
+				this.size.text="100";
+			}
+		}
+		private function addTable():void{
+			//tblLs.freshList();
+			var selWin:CreateTableWin =CreateTableWin(PopUpManager.createPopUp(this, CreateTableWin, false));
+				selWin.title="新建表";
+				selWin.setTableList(tblLs);
+				//selWin.setParentBox(this);
+				//selWin.setMeta(this.tblName);
+				var point2:Point = new Point();
+				point2=addbtn.localToGlobal(point2);
+				selWin.x=this.width/2-selWin.width/2;
+                selWin.y=(this.height-selWin.height)/2;
+		}
+		
+		private function showTableInfo():void{
+			
+			var qdoc:XML=<DATAPACKET/>
+				qdoc.@TABLE="表注册";
+				qdoc.@ACTION="detail";
+				qdoc.@WHERE="NAME='"+this.currentTable+"'";
+				var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getListUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onTableDetailResult);
+				dataService.send(qdoc);
+		}
+		
+		private function onTableDetailResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			
+			var row:XML=data.TABLEDATA.ROWDATA.ROW[0];
+			this.tblName.text=row.@NAME;
+			this.tblCode.text=row.@CODE;
+			this.remark.text=row.@REMARK;
+			/***
+			this.datatype.text=row.@TYPE;
+			if("1"==row.@PHYSICAL){
+				this.physical.text="有";
+			}else{
+				this.physical.text="无";
+			}
+			if("1"==row.@KPI){
+				this.kpictl.text="有";
+			}else{
+				this.kpictl.text="无";
+			}
+			if("tree"==row.@STRUCT){
+				datastruct.text="树型结构";
+				
+			}else{
+				datastruct.text="顺序结构";
+			}
+			  this.frequencyid.text=row.@FREQUENCY;
+			 * */
+			
+		}
+		//////////////////////////////////////////////////////////////
+		private function dataUnitChange():void{
+			var newUnit:String=this.unitcomb.selectedLabel;
+			var obj:Object=colsgrid.selectedItem;
+			var oldUnit:String=obj["UNIT"];
+			
+			if("无"==oldUnit || null==oldUnit || ""==oldUnit){
+				addUnit(this.currentTable,obj["NAME"],newUnit);
+			}else if("无"==newUnit){
+				this.delUnit(this.currentTable,obj["NAME"]);
+			}else if("无"!=oldUnit || null!=oldUnit || ""!=oldUnit){
+				this.editUnit(this.currentTable,obj["NAME"],newUnit);
+			}
+		}
+		private function addUnit(tblname:String ,colName:String ,unit:String):void{
+			var xml:XML=<DATAPACKET/>
+			xml.@ACTION="unit_add";
+			xml.@TABLE=tblname;
+			xml.@COLUMN=colName;
+			xml.@UNIT=unit;
+			var dataService:HTTPService = new HTTPService();
+			dataService.url = UrlService.getSystemDefUrl();
+			dataService.contentType="application/xml";     
+			dataService.method="POST";
+			dataService.resultFormat = "e4x";
+			dataService.showBusyCursor=true;
+			dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+			dataService.addEventListener(ResultEvent.RESULT, onUnitADDResult);
+			dataService.send(xml);
+			
+		}
+		private function onUnitADDResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			var newUnit:String=this.unitcomb.selectedLabel;
+			var obj:Object=colsgrid.selectedItem;
+			obj["UNIT"]=newUnit;
+			
+		}
+		private function delUnit(tblname:String ,colName:String):void{
+			var xml:XML=<DATAPACKET/>
+			xml.@ACTION="unit_del";
+			xml.@TABLE=tblname;
+			xml.@COLUMN=colName;
+			var dataService:HTTPService = new HTTPService();
+			dataService.url = UrlService.getSystemDefUrl();
+			dataService.contentType="application/xml";     
+			dataService.method="POST";
+			dataService.resultFormat = "e4x";
+			dataService.showBusyCursor=true;
+			dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+			dataService.addEventListener(ResultEvent.RESULT, onUnitDelResult);
+			dataService.send(xml);
+		}
+		private function onUnitDelResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			var obj:Object=colsgrid.selectedItem;
+			obj["UNIT"]="";
+		}
+		private function editUnit(tblname:String ,colName:String ,unit:String):void{
+			var xml:XML=<DATAPACKET/>
+			xml.@ACTION="unit_edit";
+			xml.@TABLE=tblname;
+			xml.@COLUMN=colName;
+			xml.@UNIT=unit;
+			var dataService:HTTPService = new HTTPService();
+			dataService.url = UrlService.getSystemDefUrl();
+			dataService.contentType="application/xml";     
+			dataService.method="POST";
+			dataService.resultFormat = "e4x";
+			dataService.showBusyCursor=true;
+			dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+			dataService.addEventListener(ResultEvent.RESULT, onUnitEditResult);
+			dataService.send(xml);
+		}
+		private function onUnitEditResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			var newUnit:String=this.unitcomb.selectedLabel;
+			var obj:Object=colsgrid.selectedItem;
+			obj["UNIT"]=newUnit;
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Array id="unitarr">
+		<mx:Object label="无"/>
+		<mx:Object label="千"/>
+		<mx:Object label="万"/>
+		<mx:Object label="圆"/>
+        <mx:Object label="万圆"/>
+        <mx:Object label="个"/>
+        <mx:Object label="只"/>
+        <mx:Object label="斤"/>
+        <mx:Object label="公斤"/>
+        <mx:Object label="吨"/>
+        <mx:Object label="升"/>
+        <mx:Object label="头"/>
+    </mx:Array>
+	<mx:Array id="arr">
+	        <mx:Object label="字符" code="varchar"/>
+	        <mx:Object label="密码字符" code="password"/>
+	        <mx:Object label="整型" code="int"/>
+	        <mx:Object label="浮点型" code="float"/>
+			<mx:Object label="日期" code="date"/>
+			<mx:Object label="图片" code="image"/>
+			<mx:Object label="文件" code="file"/>
+	    </mx:Array>
+	<mx:HDividedBox width="100%" height="100%">
+		<mx:Box width="20%" height="100%">
+			<mx:HBox>
+				<mx:Button label="新建表" click="addTable();" enabled="false" />
+				<mx:Button label="删除表" enabled="false" />
+			</mx:HBox>
+			<system:TableList id="tblLs" rowClick="showDetail(event)" width="100%" height="100%"/>
+		</mx:Box>
+		<mx:Box width="80%" height="100%">
+			<mx:Box height="30" width="100%">
+				<mx:ApplicationControlBar>
+					<mx:TabBar selectedTabTextStyleName="selectedTab" id="tabbarid" itemClick="stackClick(event)" alpha="1" styleName="tabStyle" dataProvider="displaybar"/>
+				</mx:ApplicationControlBar>
+				
+			</mx:Box>
+			<mx:ViewStack height="100%" width="100%" id="displaybar">
+				<mx:HDividedBox width="80%" height="100%" label="列定义">
+					
+					<mx:Panel width="30%" height="100%" title="列">
+						<mx:HBox>
+							<mx:Button id="addbtn" label="添加列" click="openAddColWin();"/>
+							<mx:Button label="删除列" click="delCol();"/>
+						</mx:HBox>
+						<mx:DataGrid id="colsgrid" width="100%" height="100%" itemClick="showObjDetail();" />
+					</mx:Panel>
+					<mx:Box width="50%" height="100%" horizontalAlign="center" verticalAlign="top">
+						<mx:Panel headerHeight="20" width="100%" height="20%" title="表信息">
+						
+							<mx:HBox>
+								<mx:Label text="表名：" width="60"/>
+								<mx:Label id="tblName"  />
+							</mx:HBox>
+							<mx:HBox>
+								<mx:Label text="表编码：" width="60"/>
+								<mx:Label id="tblCode"  />
+							</mx:HBox>
+							<!--
+							<mx:HBox>
+								<mx:Label text="数据类型：" width="60"/>
+								<mx:Label id="datatype" />
+							</mx:HBox>
+							<mx:HBox>
+								<mx:Label text="数据结构：" width="60"/>
+								<mx:Label id="datastruct" width="60"/>
+								<mx:Label text="数据录入频率：" width="60"/>
+								<mx:Label id="frequencyid" width="60"/>
+							</mx:HBox>
+							<mx:HBox>
+								<mx:Label text="地理坐标：" width="60"/>
+								<mx:Label id="physical" width="60"/>
+								<mx:Label text="KPI控制：" width="60"/>
+								<mx:Label id="kpictl" width="60"/>
+							</mx:HBox>
+							-->
+							<mx:HBox>
+								<mx:Label text="备注：" width="60"/>
+								<mx:Label id="remark"  />
+							</mx:HBox>
+							
+						</mx:Panel>
+						<mx:Panel headerHeight="20" width="100%" height="40%" title="列信息">
+							<mx:Box paddingLeft="20" paddingRight="20" width="50%" height="50%" horizontalAlign="center" verticalAlign="middle">
+								
+								<mx:HBox width="100%" height="100%">
+									<mx:Label text="列名称：" width="60"/><mx:TextInput id="colName" />
+								</mx:HBox>
+								<mx:HBox width="100%" height="100%">
+									<mx:Label text="列编码：" width="60"/><mx:TextInput id="colCode" editable="false"/>
+								</mx:HBox>
+								<mx:HBox width="100%" height="100%"> 
+									<mx:Label text="存储类型：" width="60"/>
+									<mx:ComboBox id="typecomb" dataProvider="{arr}" change="dataTypeChange();"/>
+								</mx:HBox>
+								<mx:HBox width="100%" height="100%">
+									<mx:Label text="长度：" width="60"/><mx:TextInput id="size"/>
+								</mx:HBox>
+								<mx:HBox width="100%" height="100%">
+									<mx:Label text="单位：" width="60"/>
+									<mx:ComboBox id="unitcomb" dataProvider="{unitarr}" change="dataUnitChange();"/>
+								</mx:HBox>
+								
+								<mx:HBox width="100%" height="100%" horizontalAlign="center">
+									<mx:Button label="保存" click="saveEdit();"/>
+								</mx:HBox>
+							</mx:Box>
+						</mx:Panel>
+						<mx:Panel headerHeight="20" width="100%" height="40%" title="列取值定义">
+							<system:ColumnValue id="columValueset" visible="false" width="100%" height="100%"/>
+						</mx:Panel>
+					</mx:Box>
+				</mx:HDividedBox>
+				<mx:Box id="showListdefp" width="30%" height="100%" label="列表显示列">
+					
+					
+				</mx:Box>
+				<mx:Box id="fkdefp" label="参考列定义">
+					
+				</mx:Box>
+				<mx:Box id="cvaluedefp" label="">
+					
+				</mx:Box>
+			</mx:ViewStack>
+			
+		</mx:Box>
+		
+	</mx:HDividedBox>
+</mx:Panel>

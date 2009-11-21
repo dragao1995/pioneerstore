@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow styleName="win" xmlns:mx="http://www.adobe.com/2006/mxml" title="选择物品类型" horizontalAlign="center" label="选择物品类型" layout="absolute" width="220" height="300" xmlns:selWin="view.selWin.*">
+	<mx:Style source="../css/popWin.css"/>
+
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+			import flash.net.LocalConnection;
+			import mx.controls.Alert;
+			import mx.controls.Text;
+			import event.good.TypeEvent;
+			
+			public var goodType:Object=null;
+			
+			private function initApp(){
+				
+			}
+			
+			private function closeWin(){
+				
+				PopUpManager.removePopUp(this);
+				
+			}
+			
+			private function selType(e:Event):void{
+				
+				
+			}
+			
+			private function selConfirm():void{
+				
+	            closeWin();
+			}
+		]]>
+	</mx:Script>
+		<mx:VBox top="5" height="100%" width="100%"  horizontalAlign="center">
+			<mx:Box  width="90%" height="95%" horizontalAlign="center">
+				
+			</mx:Box>
+			<mx:HBox width="100%" height="5%" horizontalAlign="center">
+				<mx:Button label="确定" styleName="okbtn" click="selConfirm()"/>
+				<mx:Button label="取消" styleName="delbtn" click="closeWin();" />
+			</mx:HBox>	
+		</mx:VBox>
+</mx:TitleWindow>

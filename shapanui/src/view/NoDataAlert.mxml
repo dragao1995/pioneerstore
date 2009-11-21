@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml"
+	 width="100%" height="100%" 
+	 backgroundImage="assets/appbg.jpg"
+	 horizontalAlign="center" verticalAlign="middle">
+	 
+	<mx:Image source="assets/tianshi1.gif" width="80%" height="80%"/>
+	
+</mx:Box>

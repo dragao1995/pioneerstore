@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CDSRender xmlns="component.*" xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+	<mx:Style source="../../style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import view.NoDataAlert;
+			import mx.controls.ComboBox;
+			import mx.controls.TextArea;
+			import com.ResultFilter;
+			import mx.events.CloseEvent;
+			import mx.controls.PopUpButton;
+			import view.fk.FKTextInput;
+			import adobe.utils.XMLUI;
+			import mx.events.IndexChangedEvent;
+			import mx.messaging.management.Attribute;
+			import component.FileUpload;
+			import mx.controls.DateField;
+			import view.list.ListView;
+			import mx.core.Application;
+			import mx.controls.TextInput;
+			import com.pioneer.http.UrlService;
+			import mx.managers.SystemManager;
+			import mx.utils.XMLUtil;
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import component.CDSRender;
+			import mx.rpc.http.mxml.HTTPService;
+			
+			private var keyVal:String=null;
+			private var tblName:String=null;
+			private var panelBuild:ObjectComparePanal=null;
+			private var objdoc:XML=null;//访问的数据，描述文件。
+			private var newDoc:XML=null;//添加对象的doc；
+			private var listview:ListView=null;
+			private var comp:String=null;//显示数据所属得模块。
+			private var dataEnable:Boolean=true;
+			private var dateFormat="YYYY-MM-DD";
+			
+			
+			
+			
+			public function setDateFormat(format:String):void{
+				this.dateFormat=format;
+			}
+			public function setComp(comp:String):void{
+				this.comp=comp;
+			}
+			public function setListView(view:ListView):void{
+				this.listview=view;
+			}
+			//设置查找学习的表，关键字
+			
+//			组织请求文档，发送明细请求
+			
+//			请求失败
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("连接服务器错误！");
+			}
+			
+			
+			
+			public function showData():void{
+				try{
+					var rows:XMLList=this.doc.TABLEDATA.ROWDATA.ROW;
+					//Alert.show("size="+rows.length());
+					if(null==rows || rows.length()<1){
+						var alert:NoDataAlert=new NoDataAlert();
+						detailpanel.removeAllChildren();
+						detailpanel.addChild(alert);
+						
+					}else{
+						objdoc=doc;
+						buildShowPage(doc);
+					}
+				}catch(e:Error){
+					var alert:NoDataAlert=new NoDataAlert();
+					detailpanel.removeAllChildren();
+					detailpanel.addChild(alert);
+					//Alert.show("no data");
+				}
+			}
+//			设置这样渲染方法。
+			public function setShowClass(panelBuild:ObjectComparePanal):void{
+				this.panelBuild=panelBuild;
+			}
+//			组织显示数据。
+			private function buildShowPage(doc:XML):void{
+				
+				if(doc){
+					//Alert.show("this.keyVal="+this.keyVal);
+					
+					if(null==this.panelBuild){
+						this.panelBuild=new ObjectComparePanal();
+					}
+					//13288137117
+					this.panelBuild.clear();
+					this.panelBuild.setDateFormat(this.dateFormat);
+					this.panelBuild.setComp(comp);
+					this.panelBuild.setDoc(doc);
+					var rows:XMLList=doc.TABLEDATA.ROWDATA.ROW;
+					var row:XML=this.getDetailById(doc);
+					var mate=this.getMeta(doc);
+					//Alert.show(row.toXMLString())
+					//遍历要显示的字段
+					if(null==this.keyVal){
+						row=doc.TABLEDATA.ROWDATA.ROW[0];
+					}
+					
+					for each( var col:XML in mate){
+							var val='';
+							try{
+								panelBuild.addField2Array(col,rows);
+							}catch(e:Error){
+								
+							}
+					}
+					detailpanel.removeAllChildren();
+//					
+					detailpanel.addChild(panelBuild.getDetailPanel());
+					
+				}
+			}
+			
+			private function rebuildShowPage(doc:XML):void{
+				if(doc){
+					if(null==this.panelBuild){
+						this.panelBuild=new ObjectComparePanal();
+					}
+					this.panelBuild.clear();
+					this.panelBuild.setComp(comp);
+					this.panelBuild.setDoc(doc);
+					var rows:XMLList=doc.TABLEDATA.ROWDATA.ROW;
+					var row:XML=this.getDetailById(doc);
+					var mate=this.getMeta(doc);
+					//遍历要显示的字段
+					for each( var col:XML in mate){
+							var val='';
+							try{
+								val=XMLUtil.getAttributeByQName(row,new QName(col.@NAME));	
+							}catch(e:Error){
+								
+							}
+							panelBuild.addField2Array(col,rows);
+						
+					}
+					detailpanel.removeAllChildren();
+					detailpanel.addChild(panelBuild.getDetailPanel());
+				}
+			}
+			private function getMeta(doc:XML):XMLList{
+				var mate:XMLList=doc.METADATA.TABLE.FIELD;
+				return mate;
+			}
+			//根据id取信息
+			private function getDetailById(doc:XML):XML{
+				if(null!=doc){
+					var rt:XML=null;
+					try{
+						var key:String=this.objdoc.METADATA.TABLE.KEYS.KEY.@NAME;
+						var datarows:XMLList=doc.TABLEDATA.ROWDATA.ROW;
+						//for each(var col:XML in mcrows){
+						for each( var data:XML in datarows){
+							if( data.@[key]==this.keyVal){
+								rt=data;
+								break;
+							}
+						}
+					}catch(e:Error){
+												
+					}
+				}
+				return rt;
+			}
+			
+			
+			private function getObjByName(name:String,box:Box):Object{
+				
+				var child=box.getChildByName(name);
+				
+				if(null!=child){
+					return child;
+					
+				}else{
+					var childs:Array=box.getChildren();
+					if(childs.length>0){
+						for(var i:int;i<childs.length;i++){
+							var ch:Object=childs[i];
+							try{
+								var mybox=Box(ch)
+								child=getObjByName(name,mybox);
+								if(null!=child)return child;
+							}catch(e:Error){
+								continue;
+							}
+							
+						}
+					}
+				}
+				return null;
+			}
+		]]>
+	</mx:Script>
+	<mx:XML id="detailReq" format="e4x">
+        <DATAPACKET ACTION="detail">
+            
+        </DATAPACKET >
+    </mx:XML>
+		
+	<mx:Panel headerHeight="16" width="100%" height="100%" horizontalAlign="center" title="明细">
+		<mx:Box id="detailpanel" paddingLeft="30" paddingRight="30" width="90%" >
+		
+		</mx:Box>
+	</mx:Panel>
+
+</CDSRender>

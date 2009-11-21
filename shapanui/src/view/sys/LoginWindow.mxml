@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="300" height="200"
+	preinitialize="preinit();"
+	close="closewin();"
+	creationComplete="init();"
+	styleName="label"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import com.ResultFilter;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.http.mxml.HTTPService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import com.SharedObjectUtil;
+			import com.AppShareObj;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			private var parObj:Object=null;
+			
+			private function preinit():void{
+				this.showCloseButton=true;
+			}
+			private function init():void{
+				username.text=SharedObjectUtil.getUserName();
+				
+			}
+			public function setParentObj(parObj:DisplayObject):void{
+				this.parObj=parObj;
+			}
+			private function closewin():void{
+				var userdoc:XML=AppShareObj.getUserDoc();
+	            if(null==userdoc){
+	            	Alert.show("请先登录！");
+	            }else{
+	            	PopUpManager.removePopUp(this);
+	            }
+			}
+			
+			private function login():void{
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="login";
+				doc.@NAME=this.username.text;
+				doc.@PASSWORD=this.password.text;
+				var tmplService:HTTPService = new HTTPService();
+				//Alert.show(UrlService.getGoodCDSURL());
+				tmplService.url = UrlService.getCDSActionUrl();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				tmplService.send(doc);
+			}
+			
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("网络错误，登陆服务器地址为："+UrlService.getCDSActionUrl());
+			}
+			
+			protected function onXMLResult(e:ResultEvent):void{
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				
+				AppShareObj.setName(this.username.text);
+				AppShareObj.setUserDoc(data);
+				SharedObjectUtil.setUserName(this.username.text);
+				PopUpManager.removePopUp(this);
+				if(null!=this.parObj){
+					try{
+						this.parObj.menuctrl(null);
+					}catch(e:Error){
+						Alert.show(e.getStackTrace());
+					}
+				}
+			}
+			private function keyLogin(e:KeyboardEvent):void{
+				if(e.keyCode==13){
+					login();
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Panel width="100%" height="100%" paddingLeft="14">
+		<mx:HBox width="100%">
+			<mx:Label text="登陆帐号：" width="70"  styleName="label"/>
+			<mx:TextInput width="130" id="username" styleName="textInput"/>
+		</mx:HBox>
+		<mx:HBox width="100%">
+			<mx:Label text="密码：" width="70" styleName="label"/>
+			<mx:TextInput displayAsPassword="true" width="130" id="password" keyUp="keyLogin(event);"  styleName="textInput"/>
+		</mx:HBox>
+		<mx:HBox height="20">
+			
+		</mx:HBox>
+		<mx:HBox width="100%" horizontalAlign="center">
+			<mx:Button label="登录" click="login();" styleName="okbtn"/>
+			<mx:Button label="退出" click="closewin();" styleName="delbtn" />
+			
+		</mx:HBox>
+	</mx:Panel>
+</mx:TitleWindow>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Label xmlns:mx="http://www.adobe.com/2006/mxml"
+	creationComplete="init();"
+	>
+	<mx:Script>
+		<![CDATA[
+			import view.selWin.ObjWindow;
+			import view.selWin.SelWindow;
+			import mx.managers.PopUpManager;
+		/***/
+			import mx.controls.Alert;
+			import mx.utils.XMLUtil;
+			
+			public var code:String=null;
+			public var mate:XML=null;
+			public var row:XML=null;
+			private function init():void{
+				
+			}
+			public function setInfo(mate:XML,row:XML):void{
+				this.mate=mate;
+				this.row=row;
+				if(null!=row){
+					//Alert.show(row.toXMLString());
+					//var val=XMLUtil.getAttributeByQName(row,new QName(mate.@NAME));
+					var nameVal=XMLUtil.getAttributeByQName(row,new QName((mate.@NAME)+"_NAME"));
+					//this.htmlText="<a color='#0000ff' style='cursor:hand;'>"+nameVal+"</a>";
+					this.text=nameVal;
+				}
+				
+				//idp.text=val;
+				this.addEventListener(MouseEvent.CLICK ,showDetail);
+			}
+			private function showDetail(e:MouseEvent):void{
+			try{
+				var val:String=XMLUtil.getAttributeByQName(this.row,new QName(this.mate.@NAME));
+				if(null==val || ""==val){
+					return ;
+				}
+				var selWin:ObjWindow =ObjWindow(PopUpManager.createPopUp(this, ObjWindow, true));
+				var nameVal=XMLUtil.getAttributeByQName(row,new QName((mate.@NAME)+"_NAME"));
+				selWin.title=nameVal+"信息";
+				selWin.setMate(this.mate,this.row);
+				selWin.showCloseButton=true;
+				selWin.styleName="lable";
+				var point2:Point = new Point();
+				point2=this.localToGlobal(point2);
+				selWin.x=point2.x-90;
+                selWin.y=point2.y-50;
+			}catch(e:Error){
+				Alert.show("fkLabel:"+e.message);
+			}
+			
+		}
+			
+		]]>
+	</mx:Script>
+</mx:Label>

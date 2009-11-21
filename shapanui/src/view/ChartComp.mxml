@@ -1,0 +1,610 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"
+	creationComplete="initF();"
+	horizontalGap="0"
+	verticalGap="0"
+	>
+	<mx:Style source="style/main.css"/>
+	<mx:Style>
+		.line{
+			adjustedRadius:2;
+		    form:curve;
+			background-color:#ff0000;
+		    radius:4;
+		    
+		}
+		.chartstyle{
+			background-color:#ffffff;	
+			background-image:url('http://www.google.cn/images/nav_logo4.png');
+		}
+		.head{
+			font-size:14;font-style:normal;font-family:Arial;
+			font-weight:weight;text-selected-color:#ff0000;
+			text-align:center;color:#123456;
+		}
+		.boot{
+			font-size:12;font-style:normal;font-family:Arial;
+			font-weight:normal;text-selected-color:#ff0000;
+			text-align:center;color:#123456;
+			
+		}
+		.fontstyle{
+			font-size:12;font-style:normal;font-family:Arial;
+			font-weight:normal;text-selected-color:#ff0000;
+			text-align:center;color:#123456;	
+		}
+		comstyle{
+			font-size:8;font-style:normal;font-family:Arial;
+			font-weight:normal;text-selected-color:#ff0000;
+			text-align:center;color:#123456;	
+			button-height:12;
+		}
+		.screenormal{
+			/**
+			background-alpha:1.9	;
+			**/
+		}
+		.screemax{
+			/**
+			background-alpha:1.9;
+			**/
+			background-color:#ff0000;
+		}
+		
+			
+	</mx:Style>
+	<mx:Script>
+		<![CDATA[
+			import mx.charts.series.items.PieSeriesItem;
+			import mx.effects.easing.Elastic;
+			import mx.core.Application;
+			import mx.managers.PopUpManager;
+			import view.selWin.ObjWindow;
+			import mx.events.ListEvent;
+			import mx.events.ItemClickEvent;
+			import mx.core.IUIComponent;
+			import mx.charts.chartClasses.RenderData;
+			import mx.charts.renderers.ShadowLineRenderer;
+			import mx.charts.renderers.LineRenderer;
+			import mx.charts.renderers.BoxItemRenderer;
+			import mx.charts.renderers.TriangleItemRenderer;
+			import mx.charts.renderers.CandlestickItemRenderer;
+			import mx.charts.renderers.DiamondItemRenderer;
+			
+			import mx.collections.ItemResponder;
+			import mx.graphics.SolidColor;
+			import com.pioneer.MyColor;
+
+			import mx.controls.Label;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.controls.Image;
+			import mx.utils.ColorUtil;
+			import mx.utils.ObjectUtil;
+			import mx.effects.IEffectInstance;
+			import mx.messaging.AbstractConsumer;
+			import mx.utils.XMLUtil;
+			import mx.messaging.management.Attribute;
+			import mx.collections.ArrayCollection;
+			import mx.graphics.Stroke;
+			import mx.charts.renderers.CrossItemRenderer;
+			import mx.charts.series.LineSeries;
+		import mx.controls.Alert;
+        import mx.charts.events.ChartItemEvent;
+		import mx.charts.events.LegendMouseEvent;
+		import mx.rpc.events.FaultEvent;
+		import mx.rpc.events.ResultEvent;
+        [Bindable]
+        public var expenses:Object = null;
+
+        [Bindable]
+        public var expenses2:Object = null;
+		
+		[Bindable]
+		private var mostimg:Image=new Image();
+		
+        [Bindable]
+        public var dp:Object = expenses;
+    	[Bindable]
+    	public var mydp:ArrayCollection =new ArrayCollection ();
+    	public var piedp:ArrayCollection =new ArrayCollection ();
+    	public var datadp:ArrayCollection =new ArrayCollection ();
+    	private var urlStr:String="communityResource.xml";
+    	
+    	private var tblName:String=null;
+    	
+    	public function setTblName(tblName:String):void{
+    		this.tblName=tblName;
+    	}
+    	
+    	var pietubiao:PieChart=null;
+    	var linetubiao:LineChart=null;
+    	var colunChart:ColumnChart=null;
+    	
+    	var linename:String=null;
+    	var piename:String=null;
+    	var chartindex:int=1;
+    	
+    	public function setChartIndex(index:int):void{
+    		this.chartindex=index;
+    		seltype.selectedIndex=this.chartindex;
+    	}
+    	
+		public function initF():void{
+			
+			try{
+				if(null!=urlStr){
+				
+				}else{
+					
+				}
+				linetubiao=myChart;
+				linetubiao.showDataTips=true;
+				pietubiao=pie;
+				colunChart=columnChart;
+				chartframe.removeChild(pie);
+				chartframe.removeChild(columnChart);	
+			}catch(e:Error){
+				
+			}
+			
+			
+		}
+		
+
+		private var tbl:String=null;
+		//public function buildChart(event:ResultEvent):void{
+		public function buildChart(xml:XML):void{
+			try{
+				//var xml:XML = (XML)(event.result);
+				//Alert.show(xml.toXMLString());
+				this.tblName=xml.@TABLE;
+				//设置图标标题
+				linename=xml.@linename;
+				piename=xml.@piename;
+				//var colNum:int=xml.@colnum;
+				var backgroundColor=xml.@backgroundColor;
+				var backgroundImage=xml.@backgroundImage;
+				if(null!=backgroundColor){
+					//myChart.setStyle("backgroundColor",backgroundColor);
+					//chartframe.setStyle("backgroundColor",backgroundColor);
+				}
+				if(null!=backgroundImage){
+					var img: Image=new Image();
+					img.source=backgroundImage;
+					//myChart.setStyle("backgroundImage",img);
+					//chartframe.setStyle("backgroundImage",backgroundImage);
+				}
+				var mcList:XMLList=xml.meate.mc;
+				
+				var datas:XMLList=xml.datas.data;
+				/*******************组织数据*************************/
+				// line
+				mydp =new ArrayCollection ();
+				for each(var col:XML in mcList){
+					var colObj:Object=new Object();
+					colObj["vname"]=col.@name;
+					var dateout:XML=null;
+					for each(var data:XML in datas){
+						var val:String=XMLUtil.getAttributeByQName(data,new QName(col.@code));
+						if(null==val){
+							val="0";
+						}
+						colObj[data.@name]=val;
+						colObj["value"]=XMLUtil.getAttributeByQName(data,new QName("total"));
+					}
+					mydp.addItem(colObj);
+				}
+				
+				//pie
+				piedp =new ArrayCollection ();
+				for each(var data:XML in datas){
+					var name=XMLUtil.getAttributeByQName(data,new QName("name"));
+					var value:String=XMLUtil.getAttributeByQName(data,new QName("total"));
+					if(null==value){
+						value="0";
+					}
+					var obj:Object=new Object();
+					obj["name"]=name;
+					obj["value"]=value;
+					piedp.addItem(obj);
+				}
+				/*********************添加线**********************/
+				var i=0;
+				var seriesArray:Array=new Array();
+				var pieStroke:Array=new Array();
+				try{
+					//var myseries:LineSeries=ObjectUtil.copy(myseriestmp) as LineSeries;
+					var myseries:LineSeries=myseriestmp;
+				}catch(e:Error){
+					Alert.show("copy error");
+				}
+				//myChart.dataProvider=null;
+				myseries=myseriestmp;
+				myChart.series=null;
+				var colorUtil:MyColor=new MyColor();
+				for each(var data:XML in datas){
+					var lname=data.@name;
+						var colorStr:String=data.@color;
+			        	if(null==colorStr || ""==colorStr){
+			        		colorStr=colorUtil.getColor(-1);
+			        	}
+			        	
+			        	var colornum:int=int(colorStr);
+			        	var ssc:SolidColor=new SolidColor();
+			        		//ssc.alpha=1.9;
+			        	
+			        	ssc.color=colornum;
+			        	var ss:Stroke=new Stroke();
+			        	ss.color=colornum;
+			        	ss.weight=1;
+			        	
+			        	pieStroke.push(ss);
+						var lineseries:mx.charts.series.LineSeries=new mx.charts.series.LineSeries();
+						//var itemRd=myseries.getStyle("itemRenderer");
+						var itemRd=new ClassFactory(mx.charts.renderers.DiamondItemRenderer);
+				       	lineseries.setStyle("itemRenderer",itemRd);
+				       	
+				      	//lineseries.setStyle("legendMarkerRenderer",myseries.getStyle("legendMarkerRenderer"));
+				      	
+			            //lineseries.setStyle("lineStroke",ss);
+			            //lineseries.setStyle("lineFill",ssc);
+				      	//lineseries.styleName="line";
+			            lineseries.yField=lname;
+			            lineseries.displayName=lname;
+			            
+			            lineseries.setStyle("showDataEffect",myseries.getStyle("showDataEffect"));
+			            ///////////////////pie////////////////////
+
+			            var pies:PieSeries=new PieSeries();
+			            pies.field=data.@total;
+			            pies.nameField=lname;
+			           
+			            seriesArray.push(lineseries);
+					//}
+					i++;
+					//var row:Object=new Object();
+				}
+					
+				myChart.series=seriesArray;
+				myChart.dataProvider=mydp;
+				////////////////pie/////////////////
+				
+				pie.dataProvider=piedp;
+				//mypieSeries.;
+				mypieSeries.field="value";
+				mypieSeries.nameField="name";
+				pie.series=pie.series
+				
+				initColumnChart(xml);
+				// add data to grid
+				addDataToGrid(xml);
+				cbcg();
+				this.dataframe.addChild(this.dg);
+			}catch(e:Error){
+				Alert.show(''+e.getStackTrace());
+			}
+			
+		}
+		var columsArray:Array=null;
+		private function initColumnChart(xml:XML):void{
+			var datas:XMLList=xml.datas.data;
+			columsArray=new Array();
+			var colorUtil:MyColor=new MyColor();
+			for each(var data:XML in datas){
+				try{
+					var cols1:ColumnSeries=new ColumnSeries();
+		        	cols1.yField=data.@name;
+		        	cols1.displayName=data.@name;
+		        	//cols1.setStyle("labelPosition","inside");
+		        	cols1.setStyle("labelPosition","outside");
+		        	var colorStr:String=data.@color;
+		        	if(null==colorStr || ""==colorStr){
+		        		colorStr=colorUtil.getColor(-1);
+		        	}
+		        	
+		        	var colornum:int=int(colorStr);
+		        	var ssc:SolidColor=new SolidColor();
+		        	ssc.alpha=0.5;
+		        	ssc.color=colornum;
+		        	
+		        	var ss:Stroke=new Stroke();
+		        	ss.color=colornum;
+		        	ss.weight=2;
+		        	
+		        	cols1.setStyle("fill",ssc);
+	        		//cols1.setStyle("stroke",ss);
+	        		//baseAxisStroke.color==colornum;
+	        		cols1.setStyle("stroke",baseAxisStroke);
+	        		
+		        	cols1.width=10;
+		        	columsArray.push(cols1);
+				}catch(e:Error){
+					Alert.show(e.getStackTrace());
+				}
+				
+	        	
+			}
+			if(null!=colunChart)
+				colunChart.series=columsArray;
+		}
+		var dg:DataGrid = null;
+		
+		private function addDataToGrid(xml:XML):void{
+			//组织数据
+			
+			var mcList:XMLList=xml.meate.mc;
+				
+			var datas:XMLList=xml.datas.data;
+			if(null!=dg){
+				dataframe.removeAllChildren();
+			}
+			dg=new DataGrid();
+			dg.percentWidth=100;
+			dg.alpha=2.2;
+			datadp=new ArrayCollection();
+			dg.dataProvider=datadp;
+			for each(var data:XML in datas){
+				var obj:Object=new Object();
+				var name:String=data.@name;
+				obj["name"]=name;
+				
+				for each(var col:XML in mcList){
+					var colName:String=col.@name;
+					var colCode:String=col.@code;
+					var val:String=XMLUtil.getAttributeByQName(data,new QName(col.@code));
+					if(null==val || ""==val){
+						val="0";
+					}
+					obj[colCode]=val;
+				}
+				obj["total"]=XMLUtil.getAttributeByQName(data,new QName("total"));
+				obj["code"]=XMLUtil.getAttributeByQName(data,new QName("code"));
+				obj["id"]=XMLUtil.getAttributeByQName(data,new QName("ID"));
+				datadp.addItem(obj);
+			}
+			
+			
+			dg.percentWidth=100;
+			dg.percentHeight=100;
+			//dataframe.addChild(dg);
+
+			//添加列
+				var columsArray:Array=new Array();
+			 	var column1:DataGridColumn = new DataGridColumn();
+				column1.dataField="name";
+				column1.headerText="名称";
+				//dg.columns.push(column1);
+				columsArray.push(column1);
+				var mc2List:XMLList=xml.meate.mc;
+				for each(var col:XML in mc2List){
+					var colName=col.@name;
+					var colCode=col.@code;
+					var column2:DataGridColumn = new DataGridColumn();
+					column2.dataField=colCode;
+					column2.headerText=colName;
+					//dg.columns.push(column2);
+					columsArray.push(column2);
+				}
+				var column3:DataGridColumn = new DataGridColumn();
+				column3.dataField="total";
+				column3.headerText="合计";
+				//dg.columns.push(column3);
+				columsArray.push(column3);
+			 	dg.columns=columsArray;
+			 	dg.addEventListener(ItemClickEvent.ITEM_CLICK,dgclick);
+			
+		}	
+		private function dgclick(e:ListEvent):void{
+				var line:Object=this.dg.selectedItem;
+				
+				//Alert.show(line.code+"  null!=line.code && \"\"!=line.code="+(null!=line.code && ""!=line.code));
+				var code:String=line.code;
+				var id:String=line.id;
+				if(null!=code && ""!=code){
+					var selWin:ObjWindow =ObjWindow(PopUpManager.createPopUp(this, ObjWindow, true));
+					selWin.width=280;
+					selWin.height=400;
+					if(null==this.tblName || ""==this.tblName){
+						this.tblName="商品";
+					}
+					selWin.setCondition(this.tblName,"code='"+line.code+"'");
+					selWin.showCloseButton=true;
+					var point2:Point = new Point();
+					point2=this.localToGlobal(point2);
+					selWin.x=Application.application.screen.width*3/5;
+	                selWin.y=Application.application.screen.height*3/5;
+				}else if(null!=id && ""!=id){
+					//selWin.setCondition(this.tblName,"ID='"+line.id+"'");
+				}
+				
+             	
+        }
+
+        public function myListener(e:MouseEvent):void {
+            Alert.show("Chart data was clicked"+e.toString());
+        }
+        
+         private function httpFault(event:FaultEvent):void {
+                var faultstring:String = event.fault.faultString;
+                Alert.show(faultstring);
+            }
+           
+
+        	private function cbcg():void{
+	       		if("曲线图"==seltype.value){
+	       			try{
+	       				chartframe.removeAllChildren();
+	       				chartframe.addChild(linetubiao);				   
+	       			}catch(e:Error){				
+	       			}
+	       			myChart.percentHeight=100;
+	       			legendflg.dataProvider=myChart;
+	       		}else if("饼图"==seltype.value){
+	       			try{
+	       				chartframe.removeAllChildren();
+		       			chartframe.addChild(pietubiao);
+	       			}catch(e:Error){}
+	       			
+	       			pie.percentHeight=100;
+	       			
+	       			legendflg.dataProvider=pie;
+	       		}else if("柱图"==seltype.value){
+	       			try{
+	       				colunChart.type="clustered";
+	       				chartframe.removeAllChildren();
+	       				colunChart.series=columsArray;
+		       			chartframe.addChild(colunChart);
+	       			}catch(e:Error){}
+	       			
+	       			pie.percentHeight=100;
+	       			
+	       			legendflg.dataProvider=colunChart;
+	       		}
+	       		else if("叠加柱图"==seltype.value){
+	       			try{
+	       				
+	       				colunChart.type="stacked";
+	       				chartframe.removeAllChildren();
+		       			chartframe.addChild(colunChart);
+		       			
+	       			}catch(e:Error){}
+	       			
+	       			pie.percentHeight=100;
+	       			
+	       			legendflg.dataProvider=colunChart;
+	       		}
+	       		
+	       		
+	       }
+	       private function pieChart_itemClick(evt:ChartItemEvent):void { 
+                 	var item:PieSeriesItem = evt.hitData.chartItem as PieSeriesItem; 
+	                var degrees:Number = radiansToDegrees(item.startAngle); 
+	                
+	                var arr:Array =mypieSeries.perWedgeExplodeRadius;
+	                if(arr[item.index]==0.15){
+	                	arr[item.index] = 0; 
+	                }else{
+	                	arr[item.index] = 0.15; 
+	                
+	                }
+	                
+	                mypieSeries.perWedgeExplodeRadius = arr; 
+	                /**
+	                var arr:Array = []; 
+	                arr[item.index] = 0.15; 
+	                
+	                pieSeries.perWedgeExplodeRadius = arr; 
+	                * */
+	                //pieSeries.startAngle -= degrees; 
+                
+            } 
+  
+            private function radiansToDegrees(radians:Number):Number { 
+                return radians * (180 / Math.PI); 
+            } 
+	       
+		]]>
+		
+    </mx:Script>
+
+    <mx:Array id="arr">
+	        <mx:Object label="曲线图"/>
+	        <mx:Object label="饼图"/>
+	        <mx:Object label="柱图"/>
+			<mx:Object label="叠加柱图"/>
+	    </mx:Array>
+	<mx:Stroke id="baseAxisStroke" 
+   
+    weight="1" 
+    alpha=".25" 
+   
+  />
+
+	<mx:Stroke id="pieborder" color="0x000000" weight="1" alpha=".2"/>
+	
+    <mx:HTTPService id="charthttpData"  showBusyCursor="true"/>
+    <mx:Zoom id="shrink" duration="100" zoomHeightTo=".9" zoomWidthTo=".9" />
+
+    <mx:Zoom id="revert" duration="50" zoomHeightTo="1" zoomWidthTo="1" />
+
+
+	<mx:SeriesInterpolate id="seriesAuto" duration="1000"/>
+	<mx:VDividedBox  width="100%" height="100%" backgroundSize="2" horizontalAlign="center">
+    	<mx:Box width="100%" height="70%" alpha="2.2">
+    		
+    	
+	    	<mx:HBox width="100%" height="19" horizontalAlign="center">
+	    		<mx:HBox id="chartname" horizontalAlign="center" styleName="head"  width="0">
+	    		</mx:HBox>
+	    		<mx:HBox styleName="fontstyle">
+	    			<mx:Label text=""/>
+	    			<mx:ComboBox id="seltype" height="16"  styleName="comstyle" change="cbcg()" dataProvider="{arr}"></mx:ComboBox>
+	    			
+	    		</mx:HBox>
+	    	</mx:HBox>
+	    	<mx:Box id="chartframe"  width="100%" height="100%" alpha="1.9" fontSize="14">
+	    		<mx:LineChart id="myChart"  width="100%" height="100%" addedEffect="chartGlow"  dataProvider="{mydp}" showDataTips="true" textAlign="center">
+		            <mx:horizontalAxis>
+		                <mx:CategoryAxis dataProvider="{mydp}" categoryField="vname"/>
+		            </mx:horizontalAxis>
+		            <mx:series>
+		                <mx:LineSeries  showDataEffect="seriesAuto" name="myseriestmp" id="myseriestmp" itemRenderer="mx.charts.renderers.DiamondItemRenderer" form="curve" yField="val4" displayName="图例" >
+		                </mx:LineSeries>
+		            </mx:series>
+		        </mx:LineChart>
+		        <mx:PieChart id="pie"
+		        		itemClick="pieChart_itemClick(event);" 
+		        	 height="100%" width="100%" showDataTips="true" >
+		            <mx:series  >
+		                <mx:PieSeries id="mypieSeries" stroke="{pieborder}" labelPosition="inside">
+		                	<mx:showDataEffect> 
+			                    <mx:SeriesInterpolate duration="1500" 
+			                            easingFunction="{Elastic.easeOut}" /> 
+			                </mx:showDataEffect> 
+			                <mx:filters> 
+			                    <mx:DropShadowFilter /> 
+			                </mx:filters> 
+		                </mx:PieSeries>
+		            </mx:series>
+		        </mx:PieChart>
+		        
+		        <mx:ColumnChart id="columnChart"
+		               showDataTips="true"
+		               dataProvider="{mydp}"
+		               columnWidthRatio="0.9"
+		              
+		               width="100%"
+		               height="100%">
+		           
+		           <mx:horizontalAxis>
+		               <mx:CategoryAxis id="ca" categoryField="vname" />
+		           </mx:horizontalAxis>
+		    
+		    
+		          <mx:horizontalAxisRenderers>
+		               <mx:AxisRenderer axis="{ca}" />
+		           </mx:horizontalAxisRenderers>
+		    
+		           <mx:series>
+		               <mx:ColumnSeries id="tmpcolumnSeries"
+		                       xField="vname"
+		                       yField="高科"
+		                       displayName="高科"
+		                       labelPosition="inside"/>
+		         </mx:series>
+		
+		         <mx:seriesFilters>
+		             <mx:Array />
+		         </mx:seriesFilters>
+		
+		     </mx:ColumnChart>
+	    	</mx:Box>
+	        <mx:Legend id="legendflg" horizontalAlign="center" width="100%" labelPlacement="right" legendItemClass="com.pioneer.BigFontLegendItem"  dataProvider="{myChart}" direction="horizontal" styleName="boot"/>
+	    	
+    	</mx:Box>
+    	<mx:Box id="dataframe" height="30%" width="100%" fontSize="12">
+    		
+    	</mx:Box>
+    </mx:VDividedBox>
+</mx:Box>

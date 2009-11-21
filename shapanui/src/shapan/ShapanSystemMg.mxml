@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+
+	<mx:Script>
+		<![CDATA[
+			import shapan.sysmg.ObjectBusinessMg;
+			import view.m2m.OneMoreMg;
+			import shapan.marker.ObjectMarket;
+			import view.list.ListObjMG;
+			import view.tree.TreeObjectMG;
+			import component.TreeComp;
+			import mx.controls.Alert;
+			import mx.validators.ValidationResult;
+			
+			private function radioClick(e:MouseEvent):void{
+				var obj:RadioButton=RadioButton(e.target);
+				if("typeradio"==obj.name){
+					var typeMg:TreeObjectMG=new TreeObjectMG();
+						typeMg.percentWidth=80;
+						typeMg.percentHeight=100;
+						typeMg.title="物理对象类型";
+						typeMg.setMeta("物理对象类型","typeobj");
+						workplace.removeAllChildren();
+						workplace.addChild(typeMg);
+				}else if("objradio"==obj.name){
+					var objmg:ListObjMG=new ListObjMG();
+					objmg.title="物理对象";
+					objmg.setMeta("表注册",null,"  type='基础数据' and appCode='ctl' and  physical=1  and kpi=1");
+					workplace.removeAllChildren();
+					workplace.addChild(objmg);
+				}else if("objmarketradio"==obj.name){
+					var objmarketmg:ObjectMarket=new ObjectMarket();
+					
+					workplace.removeAllChildren();
+					workplace.addChild(objmarketmg);
+				}else if("objbusinessradio"==obj.name){
+					var roleUsermg:ObjectBusinessMg=new ObjectBusinessMg();
+					roleUsermg.title="实体业务数据表维护";
+					roleUsermg.percentHeight=100;
+					roleUsermg.percentWidth=100;
+					roleUsermg.setMate("表注册","表注册","实体业务","ctl_r_business_object","OBJECT_TABLE","BUSINESS_TABLE");
+					
+					workplace.removeAllChildren();
+					workplace.addChild(roleUsermg);
+				}
+				//
+			}
+		]]>
+	</mx:Script>
+	<mx:ApplicationControlBar width="100%">
+		<mx:TabBar id="tabplace" paddingLeft="1" paddingRight="1" left="1" selectedTabTextStyleName="selectedTab"  alpha="1" styleName="tabStyle" dataProvider="displaybar"/>
+	</mx:ApplicationControlBar>
+	
+	<mx:ViewStack height="100%" width="100%" id="displaybar" horizontalGap="1">
+		<mx:HBox label="系统配置">
+			<mx:Box width="30%">
+				<mx:RadioButton groupName="menu" name="typeradio" label="对象类别管理" click="radioClick(event);"/>
+				<mx:RadioButton groupName="menu" name="objradio" label="对象管理" click="radioClick(event);"/>
+				<mx:RadioButton groupName="menu" name="objmarketradio" label="标记管理" click="radioClick(event);"/>
+				<mx:RadioButton groupName="menu" name="objbusinessradio" label="业务归属管理" click="radioClick(event);"/>
+				
+			</mx:Box>
+			<mx:Box id="workplace" width="70%" height="100%">
+				
+			</mx:Box>
+		</mx:HBox>
+	</mx:ViewStack>
+</mx:Box>

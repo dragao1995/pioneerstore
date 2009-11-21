@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+	<mx:Script>
+		<![CDATA[
+			import com.AppShareObj;
+			import view.selWin.OneObjSelWindow;
+			import view.selWin.ObjSelWindow;
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import com.ResultFilter;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.http.mxml.HTTPService;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			private var doc:XML=null;
+			public function setMeta(obj:Object):void{
+				if(null==obj){
+					return ;
+				}
+				
+				this.fkcol.text=obj["COLUM"];
+				this.fktbl.text=obj["FK_TABLE"];
+				
+				var xml:XML=<DATAPACKET/>;
+				xml.@ACTION="detail";
+				xml.@TABLE="参考列定义";
+				xml.@ID=obj["ID"];
+				
+				var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getCDSActionUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onDetailXMLResult);
+				dataService.send(xml);
+			}
+			protected function onDetailXMLResult(e:ResultEvent):void{
+				
+				var tmpdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(tmpdoc))return;
+				//如果没有记录，加一条空记录，用于显示
+				//Alert.show(tmpdoc.toXMLString());
+				this.doc=tmpdoc;
+				var row:XML=tmpdoc.TABLEDATA.ROWDATA.ROW[0];
+				if(null!=row){
+					this.winwidth.text=row.@width;
+					this.winheight.text=row.@height;
+				}
+			}
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("连接服务器错误！");
+			}
+			private function openWin():void{
+				var selWin:OneObjSelWindow =OneObjSelWindow(PopUpManager.createPopUp(this, OneObjSelWindow, false));
+				selWin.title="系统定义的表";
+				selWin.setParentBox(this);
+				selWin.setTbl("表注册");
+				selWin.setCondition("appcode='"+AppShareObj.appcode+"'");
+				var point2:Point = new Point();
+				point2=fktbl.localToGlobal(point2);
+				selWin.x=point2.x+15;
+                selWin.y=point2.y+5;
+			}
+			
+			public function addObj(obj:Object):void{
+				fktbl.text=obj["NAME"];
+			}
+			
+			public function saveEdit():void{
+				var tdoc:XML=this.doc.copy();
+				var row:XML=tdoc.TABLEDATA.ROWDATA.ROW[0];
+				if(null!=row){
+					var wwidth:String=winwidth.text;
+					if(null==wwidth || ""==wwidth || "null"==wwidth)wwidth="200";
+					winwidth.text="200";
+					var wheight:String=winheight.text;
+					if(null==wheight || ""==wheight || "null"==wheight)wheight="200";
+					winheight.text="200";
+					if(	fktbl.text!=row.@FK_TABLE)row.@FK_TABLE=	fktbl.text;
+					if(wwidth!=row.@width)row.@width=winwidth.text;
+					if(wheight!=row.@height)row.@height=winheight.text;
+				}
+				tdoc.@ACTION="edit";
+				tdoc.@TABLE="参考列定义";
+				var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getCDSActionUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onEditXMLResult);
+				dataService.send(tdoc);
+			}
+			protected function onEditXMLResult(e:ResultEvent):void{
+				
+				var tmpdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(tmpdoc))return;
+				//如果没有记录，加一条空记录，用于显示
+				Alert.show("修改成功！");
+				
+			}
+		]]>
+	</mx:Script>
+	<mx:Panel width="70%" height="100%">
+			<mx:HBox>
+				<mx:Label text="参考列" width="80"/><mx:TextInput id="fkcol" text="" editable="false"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="参考表" width="80"/><mx:TextInput id="fktbl" text="" editable="false" click=" openWin();"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="窗口宽度" width="80"/><mx:TextInput id="winwidth" text=""/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="窗口高度" width="80"/><mx:TextInput id="winheight" text=""/>
+			</mx:HBox>
+			<mx:HBox horizontalAlign="center">
+				<mx:Button label="保存" click="saveEdit()"/>
+			</mx:HBox>
+		</mx:Panel>
+</mx:Box>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="90" height="40"
+	creationComplete="init();"
+	>
+	<mx:Metadata>
+    	[Event(name="dataChange", type="event.FKEvent",bubbles="true",cancelable="true")]
+	</mx:Metadata>
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Image;
+			import event.FKEvent;
+			import mx.core.Application;
+			import mx.managers.PopUpManager;
+			import com.pioneer.http.UrlService;
+			private var text:String=null;
+			private var img:Image=null;
+			private function init():void{
+				
+			}
+			public function setText(text:String):void{
+				
+				if(null!=this.text){//重新赋值
+					
+					var e:FKEvent = new  FKEvent(FKEvent.DATA_CHANGE);
+					var obj:Object=new Object();
+					obj.name=text;
+					e.setCN(obj);
+	               	dispatchEvent(e);
+				}
+				if(null==text){
+						this.text="empty.gif";						
+					}else{
+						this.text=text;
+					}
+				if(null!=img){
+					img.source=UrlService.getFileBasePath()+"ctl_biaoji/"+this.text;
+				}else{
+					img=new Image();
+					img.percentHeight=100;
+					img.percentWidth=100;
+					img.source=UrlService.getFileBasePath()+"ctl_biaoji/"+this.text;
+					img.addEventListener(MouseEvent.CLICK,changeimg);
+					this.addChild(img);
+				}
+				
+			}
+			public function getText():String{
+				return this.text;
+			}
+			
+			private function changeimg(e:MouseEvent):void{
+				var selWin:IconSelWin =IconSelWin(PopUpManager.createPopUp(this, IconSelWin, true));
+				selWin.setParentObj(this);
+				selWin.x=(Application.application.screen.width-selWin.width)/2;
+	            selWin.y=(Application.application.screen.height-selWin.height)/2;
+					
+			}
+		]]>
+	</mx:Script>
+	
+</mx:Box>

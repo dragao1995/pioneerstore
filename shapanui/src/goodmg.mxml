@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" 
+	layout="absolute"
+	creationComplete="init();"
+	 xmlns:component="component.*"
+	 xmlns:object="view.tree.*"
+	xmlns:local="*" xmlns:good="good.*">
+	<mx:Script>
+		<![CDATA[
+			import good.GoodSearch;
+			import view.tree.TreeObjectMG;
+			import mx.controls.TabBar;
+			import mx.containers.Box;
+			import mx.events.ItemClickEvent;
+			import mx.controls.Alert;
+			import event.tree.TreeEvent;
+			
+			private var typeMg:TreeObjectMG=null;
+			private var areaMg:TreeObjectMG=null;
+			private var typegood:TypeGood=null;
+			private var goodSearch:GoodSearch=null;
+			private function init():void{
+//				地域树的初始化
+				
+				if(typeMg==null){
+						typeMg=new TreeObjectMG();
+						typeMg.percentWidth=100;
+						typeMg.setMeta("类型","goodtype");
+						typecomp.removeAllChildren();
+						typecomp.addChild(typeMg);
+					}
+			}
+			private function stackClick(e:ItemClickEvent):void{
+				var box:TabBar=TabBar(e.target);
+				var index=box.selectedIndex;
+				if(0==index){//商品类型
+					if(typeMg==null){
+						typeMg=new TreeObjectMG();
+						typeMg.percentWidth=100;
+						typeMg.setMeta("类型","goodtype");
+						typecomp.removeAllChildren();
+						typecomp.addChild(typeMg);
+					}
+				}else if(1==index){//地域类型
+					if(areaMg==null){
+						areaMg=new TreeObjectMG();
+						areaMg.percentWidth=100;
+						areaMg.setMeta("地域","area");
+						areacomp.removeAllChildren();
+						areacomp.addChild(areaMg);
+					}
+					
+				}else if(2==index){//商品信息
+					//Alert.show("typegoodshow");
+					if(null==typegood){
+						typegood=new TypeGood();
+						typegood.percentWidth=100;
+						typegood.setMeta("类型","商品","goodlogo");
+						typegoodp.addChild(typegood);
+					}
+					
+				}else if(3==index){
+					if(null==this.goodSearch){
+						this.goodSearch=new GoodSearch();
+						goodSearch.percentWidth=100;
+						goodsearchp.addChild(this.goodSearch);
+					}
+					this.goodSearch.setTextFocus();
+				}
+				
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%" height="100%">
+		<mx:Box>
+			<mx:TabBar width="100%" dataProvider="goodviewstack" itemClick="stackClick(event)"/>
+		</mx:Box>
+		<mx:Box width="100%" height="100%">
+			<mx:ViewStack click=""  id="goodviewstack" width="100%" height="100%">
+				<mx:Box id="typecomp" label="商品类型" width="100%" height="100%">
+					
+				</mx:Box>
+				<mx:Box id="areacomp" label="供应商" width="100%" height="100%">
+					
+				</mx:Box>
+				<mx:Box id="typegoodp" label="类型浏览" width="100%" height="100%">
+					
+				</mx:Box>
+				<mx:Box id="goodsearchp" label="商品检索" width="100%" height="100%">
+					
+				</mx:Box>
+				<mx:Box label="产品销售曲线" width="100%" height="100%">
+					
+				</mx:Box>
+				<mx:Box label="产品价格曲线" width="100%" height="100%">
+					
+				</mx:Box>
+			</mx:ViewStack>
+		</mx:Box>
+	</mx:VBox>
+	
+	
+	
+</mx:Application>

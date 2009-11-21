@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" 
+	width="100%" height="100%"
+	creationComplete="initCom();"
+	horizontalGap="0"
+	verticalGap="0"
+	xmlns:page="view.page.*">
+	<mx:Metadata>
+    	[Event(name="rowClick", type="event.list.ListClickEnent",bubbles="true",cancelable="true")]
+	</mx:Metadata>
+	<mx:Style source="/style/main.css" />
+	<mx:Script>
+		<![CDATA[
+			import com.AppShareObj;
+			import mx.utils.XMLUtil;
+			import com.ResultFilter;
+			import event.list.ListClickEnent;
+			import com.pioneer.http.UrlService;
+			import mx.controls.Alert;
+			import mx.rpc.http.mxml.HTTPService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			public var tbName:String=null;
+			private var condition:String=null;
+			
+			var freshMenu:ContextMenuItem = null;
+		
+			private function createInit():void{
+				freshMenu = new ContextMenuItem('刷新');
+				var menu:ContextMenu = new ContextMenu();
+				menu.customItems.push(freshMenu);
+				this.contextMenu=menu;
+				
+				freshMenu.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+	              freshList();
+	            });
+				//this.contextMenu.customItems.push(freshMenu);
+			}
+			public function freshList():void{
+				pagebar1.clear();
+				getDateWithTmpl(null);
+			}
+			private function initCom():void{
+				
+				onCreationComplete();
+				createInit();
+				getDateWithTmpl(null);
+			}
+			public function setCondition(condition:String):void{
+				if(null==this.condition){
+					this.condition=condition;
+					try{
+						if(null==pagebar1.xmlData){
+							//Alert.show("get data ... ");
+							getDateWithTmpl(null);
+						}
+							
+					}catch(ee:Error){
+						
+					}
+				}else{
+					this.condition=condition;
+					freshList();
+				}
+				
+				
+			}
+			private function onCreationComplete():void{
+			
+			if(null!=this.condition)
+				getDateWithTmpl(null);
+		}
+		
+		
+		private function onFaultHttpService(e:FaultEvent):void
+		{
+			Alert.show("网络连接错误，请重试！");
+		}
+		
+		// abstract.
+		protected function onTemplResult(e:ResultEvent):void{
+			
+			var tmpdoc:XML=XML(e.result);
+			getDateWithTmpl(tmpdoc);
+		}
+		
+		private function getDateWithTmpl(tmpl:XML):void{
+			var qdoc:XML=<DATAPACKET/>
+			qdoc.@TABLE="表注册";
+			qdoc.@ACTION="list";
+			qdoc.@MAXROW="500";
+			qdoc.@CONDITION="appcode='"+AppShareObj.appcode+"'";
+			var dataService:HTTPService = new HTTPService();
+			dataService.url = UrlService.getCDSActionUrl();
+			//Alert.show(dataService.url);
+			dataService.contentType="application/xml";     
+			dataService.method="POST";
+			dataService.resultFormat = "e4x";
+			dataService.showBusyCursor=true;
+			dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+			dataService.addEventListener(ResultEvent.RESULT, onDataResult);
+			dataService.send(qdoc);
+		}
+		private function onDataResult(e:ResultEvent):void{
+			
+			var data:XML=XML(e.result);
+			if(!ResultFilter.filter(data))return;
+			pagebar1.setXMLData(data,datalist);
+			showObjDetail();
+		}
+		public function addRow(row:XML):void{
+			pagebar1.setRow(row);
+		}
+		public function addObj(obj:Object):void{
+			var xml:XML=pagebar1.xmlData;
+			//Alert.show(xml.toXMLString());
+			var mcrows:XMLList=xml.METADATA.TABLE.FIELD;
+         	//找到主键的名称
+         	var keyName=xml.METADATA.TABLE.KEYS.KEY.@NAME;
+         	var keyval:String=obj[keyName];
+         	var node:XML=<ROW/>;
+         	node.@[keyName]=keyval;
+         	for each( var col:XML in mcrows){
+				var val='';
+				var cname:String=col.@NAME;
+				try{
+					val=obj[cname];
+					node.@[cname]=val;
+				}catch(e:Error){}
+			}
+			pagebar1.setRow(node);
+		}
+		public function editRow(row:XML):void{
+			pagebar1.editRow(row);
+		}
+		public function delRow(id:String):void{
+			pagebar1.delRow(id);
+			try{
+				datalist.selectedIndex=0;
+				showObjDetail();
+			}catch(e:Error){
+				
+			}
+			
+		}
+			
+		private function showObjDetail():void{
+				try{
+					var e:ListClickEnent = new  ListClickEnent(datalist.selectedItem[pagebar1.keyName],datalist.selectedItem);
+                	dispatchEvent(e);
+				}catch(e:Error){
+					var ee:ListClickEnent = new  ListClickEnent(null,null);
+                	dispatchEvent(ee);
+				}
+             	
+        }
+        public function clear():void{
+        	this.pagebar1.clear();
+        }
+        public function existByKey(keyVal:String):Object{
+        	return pagebar1.existByKey(keyVal);
+        }
+		]]>
+	</mx:Script>
+	<mx:Box  height="100%" width="100%" paddingLeft="0" paddingRight="0">
+   	<mx:DataGrid alpha="0.3" styleName="datagrid" height="100%" width="100%" tabIndex="0" itemClick="showObjDetail();"  id="datalist" selectedIndex="0">
+   </mx:DataGrid>
+   </mx:Box>
+   <mx:Box height="5%" width="100%" paddingLeft="0" paddingRight="0" horizontalAlign="right">
+   	<page:PageBar id="pagebar1"  height="100%" lineNumOfPage="20"/>
+   </mx:Box>
+</mx:Panel>

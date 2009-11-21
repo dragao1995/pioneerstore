@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="400" height="300"
+	creationComplete="init();"
+	close="PopUpManager.removePopUp(this);"
+	>
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import event.list.ListClickEnent;
+			import shapan.marker.ImageList;
+			private var parentObj:Object=null;
+			private function init():void{
+				var images:ImageList=new ImageList();
+				images.addEventListener(ListClickEnent.rowClick,setMark);
+				images.percentHeight=100;
+				this.addChild(images);
+				this.showCloseButton=true;
+			}
+			public function setParentObj(obj:Object):void{
+				this.parentObj=obj;
+			}
+			private function setMark(e:ListClickEnent):void{
+				var obj:Object=e.obj;
+				var doc:XML=XML(obj);
+				
+				if(null!=this.parentObj){
+					this.parentObj.setText(doc.@IMGFILE);
+					PopUpManager.removePopUp(this);
+				}
+			}
+		]]>
+	</mx:Script>
+</mx:TitleWindow>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+	creationComplete="init();"
+	 width="360" height="400"
+	 paddingLeft="30"
+	 paddingRight="10"
+	 >
+	<mx:Script>
+		<![CDATA[
+			import com.ResultFilter;
+			import mx.rpc.http.mxml.HTTPService;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.controls.Alert;
+			import com.AppShareObj;
+			import mx.managers.PopUpManager;
+			
+			private var tbls:TableList=null;
+			
+			public function setTableList(tbls:TableList):void{
+				this.tbls=tbls;
+			}
+			private function  init():void{
+				
+				tblCode.text=AppShareObj.appcode+"_";
+			}
+			private function createTable():void{
+				var tblNameStr:String=tblName.text;
+				var tblCodeStr:String=tblCode.text;
+				if(null==tblNameStr || ""==tblNameStr){
+					Alert.show("必须输入表名称！");
+					return;
+				}
+				if(null==tblCodeStr || (AppShareObj.appcode+"_")==tblCodeStr){
+					Alert.show("必须输入表编码！");
+					return;
+				}
+				
+				var xml:XML=<DATAPACKET/>;
+				xml.@ACTION="table_create";
+				xml.@NAME=tblName.text;
+				xml.@CODE=tblCode.text;
+				xml.@REMARK=this.remark.text;
+				xml.@XY=physical.selected;
+				xml.@KPI=this.kpictl.selected;
+				xml.@APPCODE=AppShareObj.appcode;
+				xml.@TYPE=typecomb.selectedLabel;
+				xml.@FREQUENCE=this.frequencecomb.selectedLabel;
+				var structobj=this.structcomb.selectedItem;
+				xml.@STRUCT=structobj["code"];
+				var dataService:HTTPService = new HTTPService();
+				dataService.url = UrlService.getSystemDefUrl();
+				dataService.contentType="application/xml";     
+				dataService.method="POST";
+				dataService.resultFormat = "e4x";
+				dataService.showBusyCursor=true;
+				dataService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				dataService.addEventListener(ResultEvent.RESULT, onTableCreateResult);
+				dataService.send(xml);
+			}
+			private function onTableCreateResult(e:ResultEvent):void{
+			
+				var data:XML=XML(e.result);
+				if(!ResultFilter.filter(data))return;
+				if(null!=this.tbls){
+					this.tbls.freshList();
+				}
+				//
+			}
+			
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("网络连接错误，请重试！");
+			}
+			private function typechange():void{
+				if(typecomb.selectedLabel=="基础数据"){
+					kpictl.selected=true;
+					this.physical.selected=true;
+					frequencecomb.enabled=false;
+				}else{
+					kpictl.selected=true;
+					this.physical.selected=false;
+					structcomb.selectedIndex=0;
+					frequencecomb.enabled=true;
+				}
+			}
+			
+			private function hpysicalClick():void{
+				if(physical.selected){
+					typecomb.selectedIndex=0;
+				}else{
+					
+				}
+			}
+			
+			private function kpiClick():void{
+				if(this.kpictl.selected){
+					typecomb.selectedIndex=1;
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Array id="arr">
+        <mx:Object label="基础数据"/>
+        <mx:Object label="业务数据"/>
+       
+    </mx:Array>
+    <mx:Array id="structarr">
+        <mx:Object label="顺序" code="list"/>
+        <mx:Object label="树型" code="tree"/>
+    </mx:Array>
+    <mx:Array id="frequencearr">
+    	<mx:Object label="及时"/>
+        <mx:Object label="月"/>
+        <mx:Object label="周"/>
+        <mx:Object label="日"/>
+    </mx:Array>
+	<mx:HBox height="20">
+		
+	</mx:HBox>
+	<mx:HBox>
+		<mx:Label text="表名：" width="80"/><mx:TextInput id="tblName"/>
+	</mx:HBox>
+	<mx:HBox>
+		<mx:Label text="表编码：" width="80"/><mx:TextInput id="tblCode"/>
+	</mx:HBox>
+	<mx:HBox>
+		<mx:Label text="备注：" width="80"/><mx:TextArea id="remark"/>
+	</mx:HBox>
+	<mx:HBox>
+		<mx:Label text="数据类型：" width="80"/>
+		<mx:ComboBox id="typecomb" dataProvider="{arr}" change="typechange();"/>
+	</mx:HBox>
+	<mx:HBox>
+		<mx:Label text="数据结构：" width="80"/>
+		<mx:ComboBox id="structcomb" dataProvider="{structarr}"/>
+	</mx:HBox>
+	<mx:HBox>
+		<mx:Label text="数据录入频率：" width="80"/>
+		<mx:ComboBox id="frequencecomb" dataProvider="{frequencearr}"/>
+	</mx:HBox>
+	
+	<mx:HBox>
+		<mx:CheckBox label="KPI控制：" id="kpictl" selected="true" click="kpiClick();"/>
+		<mx:CheckBox label="地理坐标：" id="physical" selected="true" click="hpysicalClick();"/>
+	</mx:HBox>
+	
+	<mx:HBox horizontalAlign="center" width="100%">
+			<mx:Button label="添加" click="createTable();"/>
+			<mx:Button label="关闭" click="PopUpManager.removePopUp(this);"/>
+		</mx:HBox>
+</mx:TitleWindow>

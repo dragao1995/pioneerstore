@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"
+	xmlns:info="view.Info.*"
+	>
+	
+	<mx:Script>
+        <![CDATA[
+        	import com.google.maps.controls.MapTypeControlOptions;
+        	import com.google.maps.controls.MapTypeControl;
+        	import com.google.maps.controls.ZoomControlOptions;
+        	import com.google.maps.controls.ZoomControl;
+        	import com.google.maps.controls.ControlPosition;
+        	import com.google.maps.controls.ScaleControlOptions;
+        	import com.google.maps.controls.ScaleControl;
+        	import view.ShaPanTuiyanWin;
+        	import mx.controls.Alert;
+        	import mx.managers.PopUpManager;
+        	import view.GoodTypeWin;
+        	import com.google.maps.overlays.MarkerOptions;
+	        import com.google.maps.overlays.Marker;
+	        import com.google.maps.LatLng;
+	        import com.google.maps.Map;
+	        import com.google.maps.MapEvent;
+	        import com.google.maps.MapMouseEvent;
+	        import com.google.maps.MapType;
+	        import com.google.maps.MapOptions;
+	        import com.google.maps.InfoWindowOptions;
+       
+
+
+        private var point1:Point = new Point();
+        private function addContextMenu():void {
+        	Alert.show("add menu");
+            var menu:ContextMenu = new ContextMenu();
+            var biaoji:ContextMenuItem = new ContextMenuItem('添加标记');
+            
+            var hongguan:ContextMenuItem = new ContextMenuItem('宏观经济');
+            var tuiyan:ContextMenuItem = new ContextMenuItem('沙盘推演');
+            
+            var shoucang:ContextMenuItem = new ContextMenuItem('我的收藏');
+            
+            var shuju:ContextMenuItem = new ContextMenuItem('数据录入');
+            var baobiao:ContextMenuItem = new ContextMenuItem('业务报表');
+            
+            //
+            hongguan.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, function(e:ContextMenuEvent):void {
+              
+               //map.addOverlay(marker);
+            });
+            
+           
+            
+            
+            
+
+            menu.customItems.push(biaoji);
+            menu.customItems.push(hongguan);
+            menu.customItems.push(tuiyan);
+            menu.customItems.push(shoucang);
+            menu.customItems.push(shuju);
+            menu.customItems.push(baobiao);
+            menu.hideBuiltInItems();
+
+        }
+        ]]>
+  </mx:Script>
+  
+  
+	<mx:VBox id="mainBox" height="100%" width="100%">
+		<mx:Box height="100%" width="100%">
+			
+		</mx:Box>
+		<info:InfoView height="70" width="100%"/>
+	</mx:VBox>
+</mx:Application>

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box click="boxclick(event)" creationComplete="initComp();"  xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+	
+	<mx:Metadata>
+    	[Event(name="haccortionClick",type="event.accordion.HAccordionEvent",bubbles="false",cancelable="true")]
+	</mx:Metadata>
+	<mx:Script>
+	
+		<![CDATA[
+			import mx.controls.SWFLoader;
+			import event.accordion.HAccordionEvent;
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			
+			
+			public var headWidth:int=25;
+			public var source:String=null;
+			public var head:String=null;
+			private var img:Image=null;
+			
+			private var swfLoad:SWFLoader=null;
+			private var headimg:Image=null;
+			public function setSource(source:String):void{
+				if(null!=source){
+					var perrix:String=null;
+					perrix=source.substr(source.length-3,3);
+					if(perrix.toLocaleLowerCase()=="swf"){
+						swfLoad=new SWFLoader();
+						swfLoad.source=source;
+						swfLoad.percentHeight=100;
+						swfLoad.maintainAspectRatio=false;
+						swfLoad.showBusyCursor=true;
+						
+						//swfLoad.percentWidth=100;
+						BoxH.addChild(swfLoad);
+					}else{
+						//Alert.show("perrix="+perrix);
+						img=new Image();
+						img.maintainAspectRatio=false;
+						//img.percentWidth=100;
+						//img.height=BoxH.height;
+						//img.width=BoxH.width;
+						img.source=source;
+						img.toolTip='image';
+						//img.height=119;
+						//img.percentWidth=100;
+						img.percentHeight=100;
+						//BoxH.setStyle("backgroundImage",img);
+						BoxH.addChild(img);
+						resize();
+					}
+					
+				}
+			}
+			private function mouseClick():void{
+				Alert.show("mouseClick");
+			}
+			public function setSource2(source:String,head:String):void{
+				this.source=source;
+				this.head=head;
+				
+				if(null!=source){
+					var perrix:String=null;
+					perrix=source.substr(source.length-3,3);
+					if(perrix.toLocaleLowerCase()=="swf"){
+						swfLoad=new SWFLoader();
+						swfLoad.maintainAspectRatio=false;
+						swfLoad.showBusyCursor=true;
+						swfLoad.source=source;
+						swfLoad.percentHeight=100;
+						swfLoad.percentWidth=100;
+						//swfLoad.addEventListener(MouseEvent.CLICK,mouseClick);
+						//BoxH.addChild(swfLoad);
+						
+					}else{
+						//Alert.show("perrix="+perrix);
+						img=new Image();
+						img.maintainAspectRatio=false;
+						img.source=source;
+						
+						//BoxH.addChild(img);
+						
+						resize();
+					}
+				}
+				
+				if(null!=this.head){
+					var perrix:String=null;
+					perrix=source.substr(this.head.length-3,3);
+					if(perrix.toLocaleLowerCase()=="swf"){
+						//云艺社  追求自然和谐之美
+						
+					}else{
+						
+						this.headimg=new Image();
+						this.headimg.source=this.head;
+						BoxH.addChild(this.headimg);
+						
+						resize();
+					}
+				}
+			}
+			public function resize():void{
+				if(null!=img && null!=BoxH){
+					img.percentHeight=100;
+					img.percentWidth=100;
+				}
+				
+			}
+			private function initComp():void{
+				pBox=HAccordion(this);
+				sbling=Box(this.parent).getChildren();
+				if(null!=source){
+					var perrix:String=null;
+					perrix=source.substr(source.length-3,3);
+					if(perrix.toLocaleLowerCase()=="swf"){
+						swfLoad=new SWFLoader();
+						swfLoad.source=source;
+						swfLoad.percentHeight=100;
+						swfLoad.percentWidth=100;
+						//BoxH.addChild(swfLoad);
+						
+					}else{
+						//Alert.show("perrix="+perrix);
+						img=new Image();
+						img.source=source;
+						
+						//BoxH.addChild(img);
+						
+						resize();
+					}
+				}
+				
+				if(null!=this.head){
+					var perrix:String=null;
+					perrix=source.substr(this.head.length-3,3);
+					if(perrix.toLocaleLowerCase()=="swf"){
+						
+						
+					}else{
+						//Alert.show("perrix="+perrix);
+						this.headimg=new Image();
+						this.headimg.source=this.head;
+						
+						BoxH.addChild(this.headimg);
+						
+						resize();
+					}
+				}
+				//imgshow.height=BoxH.height;
+			} 
+			var pBox:HAccordion=null;
+			var sbling:Array=null;
+			public var status:Boolean=false;
+			var lastObj:HAccordion=null;
+			public function setLastObj(obj:HAccordion){
+				this.lastObj=obj;
+			}
+			public function getLastObj():HAccordion{
+				return this.lastObj;
+			}
+			public function hOpen():void{
+				try{
+					if(null!=this.BoxH){
+						this.BoxH.removeAllChildren();
+						if(null!=img){
+							img.percentWidth=100;							
+							BoxH.addChild(img);
+						}
+						if(null!=this.swfLoad){
+							//swfLoad.percentWidth=100;	
+							swfLoad.percentHeight=100;				
+							BoxH.addChild(swfLoad);
+						}
+						
+					}
+						
+					pBox.percentWidth=100;
+					BoxH.percentWidth=100;
+					status=true;
+	//				关闭其他的
+					var box:HAccordion=null;
+					for(var i=0;i<this.sbling.length;i++){
+							box=HAccordion(this.sbling[i]);
+							box.setLastObj(this);
+							if(box!=this)
+								box.hClose()
+					}
+					
+					var ee:HAccordionEvent = new  HAccordionEvent(this.pBox.name);
+		                dispatchEvent(ee);
+				}catch(e:Error){
+					Alert.show(e.getStackTrace());
+				}
+				
+	                
+			}
+			public function isOpen():Boolean{
+				return this.status;
+			}
+			public function hClose():void{
+//				如果其他的都关闭了，就不能关闭这个；			
+							
+				pBox.width=headWidth;
+				BoxH.width=headWidth;
+				status=false;
+				if(null!=this.BoxH){
+					this.BoxH.removeAllChildren();
+					if(null!=headimg){
+						BoxH.addChild(this.headimg);						
+						//Alert.show("this.headimg.source="+this.headimg.source);						
+					}
+					
+				}
+			}
+			private function boxclick(e:Event):void{
+				
+				if(status){
+					if(this!=this.lastObj){
+						this.hClose();
+						
+					}
+				}else{
+					this.hOpen();
+					resize();
+				}
+				
+			}
+		]]>
+	</mx:Script>
+	<mx:Box id="BoxH"  width="100%" height="100%" horizontalGap="0" backgroundColor="#123456">
+		
+	</mx:Box>
+	
+</mx:Box>

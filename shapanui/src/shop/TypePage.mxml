@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" xmlns:list="view.list.*" xmlns:component="component.*">
+	<mx:Style source="style/main.css"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.events.CollectionEvent;
+			import event.tree.TreeEvent;
+			import component.TreeComp;
+			import mx.controls.Alert;
+			import event.list.ListClickEnent;
+			
+			public static var tableName:String="商品明细";
+			public var mainType:String="茶";
+			public var mainTypeName:String="茶叶";
+			public var rootId:String="6";
+			private function initTuiJian():void{
+				tuijian.clear();
+				tuijian.setMate(tableName,"ISTUIJIAN = '是' and MAINTYPE='"+mainType+"'");
+			}
+			private function initNewLs():void{
+				newLs.clear();
+				newLs.setMate(tableName,"ISNEW = '是'  and MAINTYPE='"+mainType+"'");
+			}
+			
+			public function reload():void{
+				initTuiJian();
+				initNewLs();
+				initChuXiao();
+				searchLs.clear();
+				treeCreate();
+			}
+			
+			
+			private function initChuXiao():void{
+				cxLs.clear();
+				cxLs.setMate(tableName,"ISCUXIAO = '是' and MAINTYPE='"+mainType+"'");
+			}
+			private function searchGood():void{
+				var keyVal:String=this.objName.text;
+				if(null==keyVal || ""==keyVal || " "==keyVal){
+					Alert.show("请输入要搜索商品的名称！");
+					return;
+				}
+				searchLs.clear();
+				searchLs.setMate(tableName," MAINTYPE='"+mainType+"' and (NAME  like '%"+keyVal+"%' or CODE='"+keyVal+"')");
+			}
+			private var goodShow:GoodShow=null;
+			private function showDetail(e:ListClickEnent):void{
+				var doc:XML=XML(e.obj);
+				var idStr:String=doc.@ID;
+				if(null==goodShow){
+					goodShow=new GoodShow();
+					goodshowp.removeAllChildren();
+					goodshowp.addChild(goodShow);
+				}
+				goodShow.setId(idStr);
+			}
+			
+			private function keySearch(e:KeyboardEvent):void{
+				if(13==e.keyCode){
+					searchGood();
+				}
+			}
+			
+			private function treeCreate():void{
+				if(null!=treeP){
+					treeP.removeAllChildren();
+					var treecomp:TreeComp=new TreeComp();
+					treecomp.percentWidth=100;
+					treecomp.setRootId(rootId);
+					treecomp.setTblName("商品类型");
+					
+					treecomp.addEventListener(TreeEvent.TREE_SELECTED,treeSelected);
+					treeP.addChild(treecomp);
+				}
+				
+				
+			}
+			private function treeSelected(ee:TreeEvent){
+				var node:Object=ee.treeNode;
+				if(null==node)return;
+				
+				var idStr:String=node.id;
+				//typeGoodLs
+				typeGoodLs.clear();
+				typeGoodLs.setMate(tableName,"  TYPE="+idStr+" ");
+				
+			}
+		]]>
+	</mx:Script>
+	<mx:HDividedBox width="100%" height="100%" horizontalGap="1">
+		<mx:Panel id="goodshowp" width="55%"  height="100%">
+			<mx:Image source="assets/16.jpg" width="100%" height="100%"/>
+		</mx:Panel>
+		<mx:Box width="45%"  height="100%">
+			<mx:TabBar width="100%" selectedTabTextStyleName="selectedTab" styleName="tabStyle" dataProvider="goodviewstack"/>
+			<mx:ViewStack click=""  id="goodviewstack" width="100%" height="100%" >
+				<mx:HBox styleName="label" label="{mainTypeName}橱窗" width="100%"  height="100%" horizontalGap="1">
+			
+					<mx:VBox width="50%"  height="100%" horizontalGap="1">
+						<mx:Panel title="推荐商品" headerHeight="18" width="100%" height="50%" styleName="label">
+							<list:ObjectTitle rowClick="showDetail(event)" creationComplete="initTuiJian();" id="tuijian" width="100%" height="100%"/>
+						</mx:Panel>
+						<mx:Panel title="新品上架" headerHeight="18" width="100%" height="50%"  styleName="label">
+							<list:ObjectTitle rowClick="showDetail(event)" creationComplete="initNewLs();" id="newLs" width="100%" height="100%"/>
+						</mx:Panel>
+					</mx:VBox>
+					<mx:VBox width="50%"  height="100%" horizontalGap="1">
+						<mx:Panel title="促销商品" headerHeight="18" width="100%" height="50%"  styleName="label">
+							<list:ObjectTitle rowClick="showDetail(event)" creationComplete="initChuXiao();" id="cxLs" width="100%" height="100%"/>
+						</mx:Panel>
+						<mx:Panel title="搜索商品" headerHeight="18" width="100%" height="50%"  styleName="label">
+							<mx:HBox width="100%" height="23">
+								<mx:Label text="名称/编号:"/>
+								<mx:TextInput id="objName" name="objName" width="60" height="22" keyUp="keySearch(event);"/>
+								<mx:Button label="搜索" click="searchGood();" width="40" styleName="searchbtn" height="22"/>
+							</mx:HBox>
+							<mx:HRule width="100%"/>
+							<mx:Box width="100%" height="100%">
+								<list:ObjectTitle rowClick="showDetail(event)"  id="searchLs" width="100%" height="100%"/>
+							</mx:Box>
+						</mx:Panel>
+					</mx:VBox>
+					
+				</mx:HBox>
+				<mx:HBox styleName="label" label="分类浏览">
+					<mx:Panel title="类别" width="40%" height="100%" id="treeP" creationComplete="treeCreate();">
+					</mx:Panel>
+					<mx:Panel title="商品" width="60%" height="100%">
+						<list:ObjectTitle rowClick="showDetail(event)"  id="typeGoodLs" width="100%" height="100%"/>
+					</mx:Panel>
+				</mx:HBox>
+			</mx:ViewStack>
+		</mx:Box>
+		
+	</mx:HDividedBox>
+</mx:Box>

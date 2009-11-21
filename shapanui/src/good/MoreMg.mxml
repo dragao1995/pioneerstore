@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+<mx:Style source="/style/main.css" />
+	<mx:Style>
+		/*tabStyle*/
+		Accordion{
+			background-color:#e1feba;
+			font-size:14;
+			label-align:center;
+			label-size-limit:13;
+		}
+		.tabStyle{
+			font-size:14;
+			font-style:normal;
+			font-family:Arial;
+			font-weight:normal;
+			text-selected-color:#ff0000;
+			text-align:center;
+			color:#123456;
+			item-selection-color:#ffaaaa;
+			selection-color:#ffaaaa;
+		}
+		.button{
+			font-size:15;
+				
+		}
+		Box{
+			font-size:15;	
+		}
+	</mx:Style>
+	<mx:Script>
+		<![CDATA[
+			import system.SampleTableDef;
+			import system.TableDef;
+			import mx.events.ItemClickEvent;
+			import view.m2m.OneMoreMg;
+			import mx.controls.Alert;
+			import view.list.ListObjMG;
+			import mx.core.Container;
+			import view.tree.TreeObjectMG;
+			
+			private function typemg():void{
+				var typeMg:TreeObjectMG=new TreeObjectMG();
+						typeMg.percentWidth=80;
+						typeMg.title="商品类型维护";
+						typeMg.setMeta("类型","goodtype");
+						mainp.removeAllChildren();
+						mainp.addChild(typeMg);
+			}
+			private function providermg():void{
+				var providerMg:TreeObjectMG=new TreeObjectMG();
+						providerMg.percentWidth=80;
+						providerMg.title="供应商维护";
+						providerMg.setMeta("供应商","provider");
+						//var con:DisplayObject=mainp.getChildAt(0);
+					
+						mainp.removeAllChildren();
+						
+						
+						mainp.addChild(providerMg);
+			}
+			private function spendingmg():void{
+				var spending=new SpendingMG();
+					mainp.removeAllChildren();
+					mainp.addChild(spending);
+					
+			}
+			private function storelocation():void{
+				var locationMg:TreeObjectMG=new TreeObjectMG();
+						locationMg.percentWidth=80;
+						locationMg.title="仓储位置维护";
+						locationMg.setMeta("仓储位置","location");
+						//var con:DisplayObject=mainp.getChildAt(0);
+					
+						mainp.removeAllChildren();
+						
+						
+						mainp.addChild(locationMg);
+					
+			}
+			private function usemg():void{
+				//var　usergm =new ListObjMG();
+				//usergm.setMeta("用户","user",null);
+				var usermg:ListObjMG=new ListObjMG();
+				usermg.setMeta("用户","user"," code<>'admin'");
+				usermg.title="用户维护";
+				mainp.removeAllChildren();
+				mainp.addChild(usermg);
+			}
+			private function rolemg():void{
+				var rolemg:ListObjMG=new ListObjMG();
+				rolemg.title="角色维护";
+				rolemg.setMeta("角色","role"," ID<>-1");
+				mainp.removeAllChildren();
+				mainp.addChild(rolemg);
+			}
+			private function roleusermg():void{
+				var roleUsermg:OneMoreMg=new OneMoreMg();
+				roleUsermg.title="用户授权";
+				roleUsermg.percentHeight=100;
+				roleUsermg.percentWidth=100;
+				roleUsermg.setMate("角色","用户","角色用户","s_userrole","ROLE","USER");
+				mainp.removeAllChildren();
+				mainp.addChild(roleUsermg);
+			}
+			private function roleprocessmg():void{
+				var roleProcessmg:OneMoreMg=new OneMoreMg();
+				roleProcessmg.title="角色拥有功能维护";
+				roleProcessmg.percentHeight=100;
+				roleProcessmg.percentWidth=100;
+				roleProcessmg.setMate("角色","功能","角色功能","s_roleprocess","ROLE","PROCESS");
+				mainp.removeAllChildren();
+				mainp.addChild(roleProcessmg);
+			}
+			private function processmg():void{
+				var processmg:ListObjMG=new ListObjMG();
+				processmg.title="功能维护";
+				processmg.percentWidth=100;
+				processmg.setMeta("功能","process"," ID<>-1");
+				mainp.removeAllChildren();
+				mainp.addChild(processmg);
+			}
+			private function parsSet():void{
+				var pset:ParamterSet=new ParamterSet();
+				mainp.removeAllChildren();
+				mainp.addChild(pset);
+			}
+			
+			private function tableDef():void{
+				var tbldef:SampleTableDef=new SampleTableDef();
+				mainp.removeAllChildren();
+				mainp.addChild(tbldef);
+			}
+			private function ingooditemmg():void{
+				var ingood=new InGoodMG();
+					mainp.removeAllChildren();
+					mainp.addChild(ingood);
+				/*
+				var initemmg:ListObjMG=new ListObjMG();
+				initemmg.setDateFormat("YYYYMMDD");
+				initemmg.setMeta("入货单","initem"," ID!=-1");
+				initemmg.title="入货单维护";
+				mainp.removeAllChildren();
+				mainp.addChild(initemmg);
+				*/
+				
+			}
+			private function goodmg(e:ItemClickEvent):void{
+				var lab:String=e.label;
+				if("类别维护"==lab){
+					typemg();
+				}else if("供应商维护"==lab){
+					providermg();
+				}else if("开支"==lab){
+					spendingmg();
+				}else if("仓储位置"==lab){
+					storelocation();
+				}
+				else if("入货单"==lab){
+					ingooditemmg();
+				}
+			}
+			
+			private function systemmg(e:ItemClickEvent):void{
+				var lab:String=e.label;
+				if("用户维护"==lab){
+					usemg();
+				}else if("角色维护"==lab){
+					rolemg();
+				}else if("用户授权"==lab){
+					roleusermg();
+				}else if("角色功能"==lab){
+					roleprocessmg();
+				}else if("参数设置"==lab){
+					parsSet();
+				}else if("功能维护"==lab){
+					processmg();
+				}else if("系统字段设置"==lab){
+					tableDef();
+				}
+				
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:HDividedBox width="100%" height="100%">
+		<mx:Box width="20%" height="100%">
+			<mx:Accordion width="100%" height="100%" headerStyleName="label">
+				
+			
+				<mx:Panel headerHeight="15" label="商品" width="100%" horizontalAlign="left" paddingLeft="19"  height="100%" verticalAlign="top">
+					<mx:RadioButtonGroup id="goodmggroup" itemClick="goodmg(event);" />
+					<mx:RadioButton groupName="goodmggroup" label="类别维护" styleName="label" />
+					<mx:RadioButton groupName="goodmggroup" label="供应商维护" styleName="label" />
+					<mx:RadioButton groupName="goodmggroup" label="开支" styleName="label" />
+					<mx:RadioButton groupName="goodmggroup" label="仓储位置" styleName="label" />
+					<mx:RadioButton groupName="goodmggroup" label="入货单" styleName="label" />
+					
+				</mx:Panel>
+				<mx:Panel headerHeight="15" label="系统" width="100%" horizontalAlign="left" paddingLeft="19" height="100%" verticalAlign="top">
+					<mx:RadioButtonGroup id="systemgroup" itemClick="systemmg(event);" />
+					<mx:RadioButton groupName="systemgroup" label="用户维护" styleName="label" />
+					<mx:RadioButton groupName="systemgroup" label="角色维护" styleName="label" />
+					<mx:RadioButton groupName="systemgroup" label="用户授权" styleName="label" />
+					<mx:RadioButton groupName="systemgroup" label="角色功能" styleName="label" />
+					<mx:RadioButton groupName="systemgroup" label="参数设置" styleName="label" />
+					<mx:RadioButton groupName="systemgroup" label="系统字段扩展" styleName="label" />
+					
+					<mx:RadioButton groupName="systemgroup" label="功能维护" styleName="label" visible="false"/>
+					
+				</mx:Panel>
+			</mx:Accordion>	
+					
+					
+				
+		</mx:Box>
+		<mx:Box width="80%" height="100%" id="mainp">
+			
+			
+		</mx:Box>
+	</mx:HDividedBox>
+</mx:Box>

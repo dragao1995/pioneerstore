@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%"
+	creationComplete="init();"
+	title="图标"
+	>
+	<mx:Metadata>
+    	[Event(name="rowClick", type="event.list.ListClickEnent",bubbles="true",cancelable="true")]
+	</mx:Metadata>
+	<mx:Script>
+		<![CDATA[
+			import event.list.ListClickEnent;
+			import component.ImageBrowse;
+			import mx.controls.Button;
+			import mx.controls.Image;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import com.pioneer.http.UrlService;
+			import mx.rpc.http.mxml.HTTPService;
+			import mx.controls.Alert;
+			
+			private function init():void{
+				var doc:XML=<DATAPACKET/>;
+				doc.@ACTION="list";
+				doc.@TABLE="标记";
+				doc.@CONDITION="ID!=-1";
+				
+				var tmplService:HTTPService = new HTTPService();
+				tmplService.url = UrlService.getDetailUrl();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				tmplService.send(doc);
+			}
+			
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("Unable to load datasource:"+e.message);
+			}
+			protected function onXMLResult(e:ResultEvent):void{
+				try{
+					var tmpdoc:XML=XML(e.result);
+					var rows:XMLList=tmpdoc.TABLEDATA.ROWDATA.ROW;
+					for each(var row:XML in rows){
+						var name:String=row.@NAME;
+						var path:String=row.@IMGFILE;
+						var img:ImageBrowse=new ImageBrowse();
+						var type:String=row.@TYPE;
+						img.row=row;
+		            	img.setComp("ctl_biaoji");
+		            	img.setLabel(name);
+		            	img.setName(path);
+		            	img.width=40
+		            	img.height=60;
+		            	
+		            	img.document=row;
+		            	img.addEventListener(MouseEvent.CLICK,imgclick);
+		            	if("系统"==type){
+							titlep.addChild(img);
+		            	}else{
+		            		selfp.addChild(img);
+		            	}
+					}
+					
+					}catch(e:Error){}
+			}
+			
+			private function imgclick(e:MouseEvent):void{
+				var obj:Object=e.currentTarget; 
+				var doc:XML=XML(obj.document);
+				try{
+					var ee:ListClickEnent = new  ListClickEnent("nokey",doc);
+                	dispatchEvent(ee);
+				}catch(e1:Error){
+					
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:TabBar id="tabplace" paddingLeft="1" paddingRight="1" left="1" selectedTabTextStyleName="selectedTab"  alpha="1" styleName="tabStyle" dataProvider="displaybar"/>
+	<mx:Box id="mainp" height="100%" width="100%">
+		<mx:ViewStack height="100%" width="100%" id="displaybar" horizontalGap="1">
+			<mx:Tile label="系统图标" id="titlep" height="100%" width="100%" direction="horizontal" borderStyle="inset" horizontalGap="10" verticalGap="15" 
+	             color="0x323232" paddingTop="10" paddingBottom="10" paddingLeft="10" paddingRight="10">
+				
+			</mx:Tile>
+			<mx:Tile label="我的图标" id="selfp" height="100%" width="100%" direction="horizontal" borderStyle="inset" horizontalGap="10" verticalGap="15" 
+	             color="0x323232" paddingTop="10" paddingBottom="10" paddingLeft="10" paddingRight="10">
+				
+			</mx:Tile>
+		</mx:ViewStack>
+		
+	</mx:Box>
+</mx:Panel>
