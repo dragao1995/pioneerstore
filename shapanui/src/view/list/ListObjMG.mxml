@@ -18,14 +18,22 @@
 		private var delfun:Boolean=true;
 		private var dateFormat="YYYY-MM-DD";
 		private var menubarVisible:Boolean=true;
-		
+		private var maxRow:int=-1;
 		private var cols:Array=null;
         public function setSearchCols(cols:Array):void{
         	
         	
         	this.cols=cols;
         }
-        
+        /**
+		 设置最多取多少列数据。
+		 * */
+		public function setMaxRow(maxRow:int):void{
+			this.maxRow=maxRow;
+			if(null!=listview){
+				listview.setMaxRow(this.maxRow);
+			}
+		}
 		public function setMenubarVisible(flg:Boolean):void{
 			this.menubarVisible=flg;
 		}
@@ -49,9 +57,11 @@
 			
 			init();
 		}
+		var listview:ListView=null;
 		private function init():void{
 			this.removeAllChildren();
-			var listview:ListView=new ListView();
+			if(null==listview)
+				listview=new ListView();
 			listview.setSearchCols(this.cols);
 			listview.percentWidth=35;
 			listview.tbName=this.tblName;
@@ -63,7 +73,7 @@
 			detailp.setDateFormat(this.dateFormat);
 			this.addChild(detailp);
 			detailp.setListView(listview);
-			
+			listview.setMaxRow(this.maxRow);
 		}
 		
 		private function showDetail(e:ListClickEnent):void{

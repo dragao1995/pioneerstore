@@ -97,10 +97,21 @@ ToolTip{
 	font-size:13;
 	font-style:normal;
 	font-family:Arial;
+	font-weight:normal;
 	color:#123456;
 	text-align:center;
 	text-roll-over-color:#7AF106;
 	icon:Embed(source="../view/images/del.gif");
+}
+.selbtn{
+	font-size:13;
+	font-style:normal;
+	font-family:Arial;
+	font-weight:normal;
+	color:#123456;
+	text-align:center;
+	text-roll-over-color:#7AF106;
+	icon:Embed(source="../assets/icon_cart_full.png");
 }
 /*tabStyle*/
 .tabStyle{

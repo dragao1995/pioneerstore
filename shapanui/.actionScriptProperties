@@ -10,23 +10,29 @@
 <sourceAttachmentPath/>
 </compiler>
 <applications>
-<application path="shop.mxml"/>
-<application path="setLocalPars.mxml"/>
+<application path="ShopCart.mxml"/>
 <application path="tree.mxml"/>
-<application path="popuWin.mxml"/>
-<application path="shapanui.mxml"/>
-<application path="Test1.mxml"/>
-<application path="goodmg.mxml"/>
-<application path="xmlTest.mxml"/>
-<application path="sale.mxml"/>
-<application path="file.mxml"/>
-<application path="good.mxml"/>
-<application path="store.mxml"/>
-<application path="button.mxml"/>
-<application path="ShareObjectTest.mxml"/>
 <application path="menu.mxml"/>
+<application path="popuWin.mxml"/>
+<application path="publish.mxml"/>
 <application path="maptest.mxml"/>
+<application path="shapanui.mxml"/>
+<application path="shop.mxml"/>
+<application path="ShopTypeBrowse.mxml"/>
+<application path="Test1.mxml"/>
+<application path="xmlTest.mxml"/>
+<application path="goodmg.mxml"/>
+<application path="good.mxml"/>
+<application path="file.mxml"/>
+<application path="sale.mxml"/>
 <application path="shopmg.mxml"/>
+<application path="ShopOrdermg.mxml"/>
+<application path="store.mxml"/>
+<application path="ShareObjectTest.mxml"/>
+<application path="button.mxml"/>
+<application path="setLocalPars.mxml"/>
+<application path="VideoDisplay.mxml"/>
+<application path="Shopgoodmg.mxml"/>
 </applications>
 <modules/>
 <buildCSSFiles/>

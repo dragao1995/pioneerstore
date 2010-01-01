@@ -14,6 +14,9 @@ package view.tree
 	import mx.controls.Label;
 	import mx.controls.TextInput;
 	import mx.core.UITextField;
+	import mx.utils.XMLUtil;
+	
+	import view.fk.FKTextInput;
 	
 	public class TreePanal
 	{
@@ -100,6 +103,37 @@ package view.tree
 			
 			
 		}
+		private function fkDataChange(e:event.FKEvent):void{
+			try{
+				
+				var valobj:Object=e.getCN();
+				var obj:FKTextInput=FKTextInput(e.target);
+				var meta:XML=XML(obj.document);
+				var type:String=meta.@TYPE;
+				var name:String=meta.@NAME;
+				var ISFK:String=meta.@ISFK;
+				var val:String="";
+				var valName:String=null;
+				
+				val=valobj.id;
+				valName=valobj.name;
+				var row:XML=this.editDoc.TABLEDATA.ROWDATA.ROW[0];
+				var oldrow:XML=this.doc.TABLEDATA.ROWDATA.ROW[0];
+				this.editDoc.@flg=1;
+				if(val!=oldrow.@[name] && "ICON"!=name){
+					//Alert.show(name+"_NAME="+valName);
+					row.@[name+"_NAME"]=valName;
+					row.@[name]=val;
+				}else if(valName!=oldrow.@[name]){
+					row.@[name]=valName;
+				}
+				//Alert.show(row.toXMLString());
+			}catch(err:Error){
+				Alert.show(err.message);
+			}
+			
+			
+		}
 		private function dateChange(e:flash.events.FocusEvent):void{
 			try{
 				var obj:DateField=DateField(e.target);
@@ -140,14 +174,17 @@ package view.tree
 			
 			
 		}
-		public function addField2Array(mate:XML,val:String):void{
+		public function addField2Array(mate:XML,row:XML):void{
 			if(mate){
 //				col.@NAME,col.@REMARK
 				var label:String=mate.@REMARK+":";
 				var name:String=mate.@NAME;
+				if(null==row)return;
+				var val:String=XMLUtil.getAttributeByQName(row,new QName(mate.@NAME));	
 				var isEditStr:String=mate.@ISEDIT;
 				var isEdit:Boolean=false;
 				var type:String=mate.@TYPE;
+				var ISFK:String=mate.@ISFK;
 				if("true"==isEditStr){
 					isEdit=true;
 				}
@@ -160,7 +197,12 @@ package view.tree
 					dp=false;
 				}
 				
-				
+				if("1"==ISFK && "ICON"!=name){
+					val=XMLUtil.getAttributeByQName(row,new QName((mate.@NAME)+"_NAME"));
+				}else{
+					
+					val=XMLUtil.getAttributeByQName(row,new QName(mate.@NAME));
+				}
 				
 			 	
 			 	var p:HBox=new HBox();//编辑显示
@@ -180,6 +222,17 @@ package view.tree
 				editf.id=name+"_id";
 				editf.addEventListener(flash.events.FocusEvent.FOCUS_OUT,fieldChange);
 			 	p.addChild(el);
+			 	if("1"==ISFK && "ICON"!=name){
+								var fkinput:FKTextInput=new FKTextInput();
+								fkinput.addEventListener(event.FKEvent.DATA_CHANGE,fkDataChange);
+								fkinput.setInfo(mate,row);
+								
+								fkinput.document=mate;
+								fkinput.styleName="textInput";
+								fkinput.name=name;
+								fkinput.id=name+"_id";
+								p.addChild(fkinput);
+							}else
 			 	if("date"==type){
 					var datef:DateField=new DateField();
 					datef.text=val;

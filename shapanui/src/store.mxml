@@ -167,7 +167,7 @@
 				}else{
 					tmplService.url = UrlService.getServiceUrl()+"assets/info.xml";
 				}
-				
+				Alert.show(tmplService.url);
 				tmplService.contentType="application/xml";     
 				tmplService.method="POST";
 				tmplService.resultFormat = "e4x";
@@ -178,6 +178,7 @@
 			}
 			private function onFaultHttpService(e:FaultEvent):void
 			{
+				SharedObjectUtil.setServiceURL(null);
 				Alert.show("网络连接错误，请重试！");
 			}
 			protected function onXMLResult(e:ResultEvent):void{

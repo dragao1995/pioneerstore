@@ -148,7 +148,7 @@
 							}
 							//Alert.show("val="+val);
 //							panelBuild.addField(col,val);
-							panelBuild.addField2Array(col,val);
+							panelBuild.addField2Array(col,row);
 						
 					}
 					detailpanel.removeAllChildren();
@@ -185,7 +185,7 @@
 							}
 							
 //							panelBuild.addField(col,val);
-							panelBuild.addField2Array(col,val);
+							panelBuild.addField2Array(col,row);
 						
 					}
 					detailpanel.removeAllChildren();

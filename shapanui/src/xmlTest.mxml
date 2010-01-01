@@ -1,47 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
- creationComplete="init();"
-	xmlns:object="view.object.*" xmlns:list="view.list.*" xmlns:good="good.*">
+
+	>
 	<mx:Script>
 		<![CDATA[
-			import mx.core.UITextField;
-			import mx.controls.TextArea;
-			import mx.managers.PopUpManager;
-			import view.selWin.SelWin;
 			
-			import mx.controls.Alert;
-			import event.list.ListClickEnent;
-			private function init():void{
-				listgoodsmg.setMeta("标记",null,"ID<>-1");
-				
-				
-				//Alert.show("this.txtp.text.length="+);
-				//Alert.show("this.txtp.width="+this.txtp.width);
-			}
 			
-			private function initt():void{
-				
-			}
-				private function overcc( e:MouseEvent):void{
-					var obj:UITextField =UITextField(e.target);
-					Alert.show(obj.text.length+":::"+obj.width);
-					
-					
-				}
-				
-				private function addWin():void{
-
-				}
+			
 		]]>
 	</mx:Script>
+	<mx:TabBar width="272" height="20" dataProvider="viewstack1" />
+	<mx:ViewStack id="viewstack1" width="508" height="388">
+		<mx:Canvas label="View 1" width="100%" height="100%">
+		</mx:Canvas>
+		<mx:HBox label="111" width="100%" height="100%">
+		</mx:HBox>
+		<mx:HBox label="123" width="100%" height="100%">
+		</mx:HBox>
+	</mx:ViewStack>
 
-	<mx:Box width="100%" id="ppp">
-		
-
-		<mx:Button click="initt()" label="add obj"/>
-	</mx:Box>
-	<mx:HBox id="mainbox" width="100%" height="100%">
-		
-		<list:ListObjMG id="listgoodsmg"/>
-	</mx:HBox>
+	
 </mx:Application>

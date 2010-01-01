@@ -7,31 +7,27 @@
 	<mx:Style source="style/main.css"/>
 	<mx:Script>
         <![CDATA[
+        	import shop.GoodCart;
         	import shop.DingWei;
-        	import mx.containers.Tile;
         	import view.ZixunWin;
         	import mx.events.ListEvent;
         	import shop.TypePage;
         	import shop.MainPage;
-        	import shapan.ShapanSystemMg;
+
         	import com.SharedObjectUtil;
         	import mx.rpc.events.ResultEvent;
         	import mx.rpc.events.FaultEvent;
         	import com.pioneer.http.UrlService;
         	import mx.rpc.http.mxml.HTTPService;
         	import com.AppShareObj;
-    	import shapan.ZLJiankong;
     	import event.accordion.HAccordionEvent;
 
     	
-    	import shapan.Status;
-    	import view.Info.InfoView;
-    	import shapan.ZLTuiyan;
+    	
         	
     	
     	import mx.controls.Alert;
     	import mx.managers.PopUpManager;
-    	import view.GoodTypeWin;
     	import com.google.maps.overlays.MarkerOptions;
         import com.google.maps.overlays.Marker;
         import com.google.maps.LatLng;
@@ -48,8 +44,6 @@
        private var gendiaoPage:TypePage=null;
        
        private var otherPage:TypePage=null;
-       private var info:InfoView=null;
-       private var status :Status=null;
        private function init():void{
        	//zone1.setSource2("assets/mainhead.gif","assets/mainheadtitle.gif");
        	zone1.setSource2("assets/mainhead.swf","assets/mainheadtitle.gif");
@@ -226,27 +220,68 @@
 			Alert.show("打开购物车");
 		}
 		private var dinwei:DingWei=null;
-		private function menuOpen(item:ListEvent):void{
-	    	if(0==item.rowIndex){
-	    		var userWin:ZixunWin =ZixunWin(PopUpManager.createPopUp(this, ZixunWin, false));
-	    		var point2:Point = new Point();
-				point2=AppSelection.localToGlobal(point2);
-				userWin.x=point2.x-150;
-                userWin.y=point2.y-5;
-	    	}else if(1==item.rowIndex){
-	    		//
-	    		if(null==this.dinwei){
-	    			this.dinwei=new DingWei();
-	    			
-	    		}
-	    		mainplace.removeAllChildren();
-	    		mainplace.addChild(this.dinwei);
-	    	}else if(2==item.rowIndex){
-	    		//daohang
-	    		navigateToURL(new URLRequest("http://www.fg001.com"),"_bank");
-	    	}
-	    	
+		private var cart:GoodCart=null;
+		private var currentbtn:Button=null;
+		
+		private function setcurrentbtn(curent:Button):void{
+			if(null!=curent){
+				curent.setStyle("borderColor","red");
+				
+			}
+			if(null!=currentbtn){
+				currentbtn.setStyle("borderColor","#f4f4f4");
+			}
+			currentbtn=curent;
+		}
+		
+	    
+	    private function maxscreen():void{
+	    	try{
+              		stage.displayState = stage.displayState == StageDisplayState.NORMAL?StageDisplayState.FULL_SCREEN:StageDisplayState.NORMAL;
+	              	if(stage.displayState == StageDisplayState.NORMAL){
+	              		//screenctl.caption="全屏";
+	              		maxscreenbtn.label="全屏";
+	              	}else{
+	              		maxscreenbtn.label="退出";
+	              		//screenctl.caption="退出全屏";
+	              	}
+              		setcurrentbtn(maxscreenbtn);
+              }catch(e:Error){
+              	Alert.show("Error："+e.message);
+              }
 	    }
+	     private function goodCart():void{
+	     	mainplace.removeAllChildren();
+    		if(null==this.cart){
+    			this.cart=new GoodCart();
+    			
+    		}else{
+    			this.cart.fresh();
+    		}
+    		mainplace.addChild(this.cart);
+    		setcurrentbtn(goodcartbtn);
+	     }
+	     private function zixun():void{
+	     	var userWin:ZixunWin =ZixunWin(PopUpManager.createPopUp(this, ZixunWin, false));
+    		var point2:Point = new Point();
+			point2=maxscreenbtn.localToGlobal(point2);
+			userWin.x=point2.x-150;
+            userWin.y=point2.y-5;
+            setcurrentbtn(zixunbtn);
+	     }
+	     private function dingwei():void{
+	     	if(null==this.dinwei){
+    			this.dinwei=new DingWei();
+    			
+    		}
+    		mainplace.removeAllChildren();
+    		mainplace.addChild(this.dinwei);
+    		setcurrentbtn(dinweibtn);
+	     }
+	     private function daohang():void{
+	     	navigateToURL(new URLRequest("http://www.fg001.com"),"_bank");
+	     	
+	     }
         ]]>
   </mx:Script>
   
@@ -279,21 +314,21 @@
 			</mx:Box>
 			
 		</mx:Panel>
-  		<mx:VBox width="35"  height="100%" backgroundColor="#66ff00" horizontalGap="0">
-  			<mx:Box height="135" color="0x323232">
+  		<mx:VBox width="40"  height="100%" backgroundColor="#66ff00" horizontalGap="0">
+  			<mx:Box height="135" color="0x323232" >
   				
   			</mx:Box>
-  			<mx:TileList id="AppSelection" backgroundColor="#66ff00" styleName="label" itemClick="menuOpen(event);" paddingLeft="0" y="200" height="100%" color="0x323232" maxColumns="1"  >
-	            <mx:dataProvider>
-	                <mx:Array>
-	                   
-	                    <mx:Object label="咨询" icon="@Embed('assets/zixun.gif')"/>
-	                    <mx:Object label="定位" icon="@Embed('assets/dingwei.gif')"/>
-	                    <mx:Object label="导航" icon="@Embed('assets/daohang.gif')"/>
-	                    <mx:Object label="说明" icon="@Embed('assets/zixun.gif')"/>
-	                </mx:Array>
-	            </mx:dataProvider>
-	        </mx:TileList>
+  			
+	        <mx:VBox>
+
+	            <mx:Button  label="全屏" id="maxscreenbtn" click="maxscreen();" height="40" width="40" icon="@Embed('assets/max.gif')"/>
+	            <mx:Button label="购物车" id="goodcartbtn"  click="goodCart();" height="40" width="40"  icon="@Embed('assets/cart.gif')"/>
+	            <mx:Button label="咨询" id="zixunbtn" click="zixun();" height="40" width="40"  icon="@Embed('assets/zixun.gif')"/>
+	            <mx:Button label="定位" id="dinweibtn" click="dingwei();" height="40" width="40"  icon="@Embed('assets/dingwei.gif')"/>
+	            <mx:Button label="导航" id="daohangbtn" click="daohang();" height="40" width="40"  icon="@Embed('assets/daohang.gif')"/>
+	            <mx:Button enabled="false" borderColor="red" label="说明" height="40" width="40"  icon="@Embed('assets/zixun.gif')"/>
+	
+	        </mx:VBox>
 	       
   		</mx:VBox>
   	</mx:HBox>

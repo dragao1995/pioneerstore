@@ -46,10 +46,14 @@ package view.object
 		private var dateFormat:String="YYYY-MM-DD";
 		private var areaHeight:int=0;
 		private var defaultValues:Array=null;
+		private var readonlyCols:Array=null;
 			//设置默认值 obj.NAME ,obj.VALUE
 		public function setDefaultValues(defaultValues:Array):void{
 			this.defaultValues=defaultValues;
 			
+		}
+		public function setReadonlyCols(readonlyCols:Array):void{
+			this.readonlyCols=readonlyCols;
 		}
 		public function setAreaHeight(areaHeight:int):void{
 			this.areaHeight=areaHeight;
@@ -350,6 +354,19 @@ package view.object
 			}
 			return flg;
 		}
+		private function isReadonly(colName:String):Boolean{
+			var flg:Boolean=false;
+			if(null!=this.readonlyCols){
+				for each(var obj:Object in this.readonlyCols){
+					if(obj.NAME==colName){
+						flg=true;
+						break;
+					}
+				}
+			}
+			return flg;
+		}
+		//readonlyCols
 		public function addField2Array(mate:XML,row:XML):void{
 			try{
 				if(mate){
@@ -432,7 +449,7 @@ package view.object
 							datef.formatString=dateFormat;
 							datef.dayNames=['日','一','二','三','四','五','六'];
 							datef.monthNames=['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
-		
+							
 							p.addChild(datef);
 							
 							
@@ -441,6 +458,9 @@ package view.object
 							fileSel2.styleName="textInput";
 							fileSel2.addEventListener(FileEvent.UPLOAD_SUCESSFUL,fileChange);
 							if(isSetDefaultValue(name)){
+								fileSel2.setEditAble(false);
+							}
+							if(isReadonly(name)){
 								fileSel2.setEditAble(false);
 							}
 							fileSel2.percentWidth=60;
@@ -480,6 +500,9 @@ package view.object
 								tarea.id=name+"_id";
 								tarea.addEventListener(flash.events.Event.CHANGE,textAreaChange);
 								tarea.document=mate;
+								if(isReadonly(name)){
+									tarea.enabled=false;
+								}
 								p.addChild(tarea);
 							}else if("1"==haveList){//添加list
 								 var ls:ComboBox=new ComboBox();
@@ -651,6 +674,7 @@ package view.object
 								datef1.text=val;
 								datef1.editable=false;
 							}
+							
 							ap.addChild(datef1);
 							
 							
@@ -671,6 +695,7 @@ package view.object
 								nfileSel.setEditAble(false);
 								//nfileSel.browsebtn.enabled=false;
 							}
+							
 							ap.addChild(nfileSel);
 						}else {
 							if("ICON"==name ){

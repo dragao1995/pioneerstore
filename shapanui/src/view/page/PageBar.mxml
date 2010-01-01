@@ -25,7 +25,7 @@
 			private var currentPage:int=1;//当前要显示的页数
 			private var startIndex=0;//开始索引
 			private var endIndex=10;//结束索引
-			private var selpages:Array = new Array();
+			private var selpages:Array = null;
 			
 			
 			public var columsArray:Array=null;
@@ -122,8 +122,10 @@
 			}
 			
 			private function initPageCtl():void{
+				
 				if(null!=this.xmlData){
 					try{
+						this.selpages= new Array();
 						var datarows:XMLList=this.xmlData.TABLEDATA.ROWDATA.ROW;
 						if(datarows.length()>0){
 							this.lineNum=datarows.length();
