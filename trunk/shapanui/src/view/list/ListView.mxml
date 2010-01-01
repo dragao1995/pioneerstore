@@ -20,11 +20,13 @@
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
 			public var tbName:String=null;
-			private var condition:String=null;
+			public var condition:String=null;
 			
 			private var newCondition:String="";
+			private var maxRow:int=-1;
+			private var orders:XML=null;
 			var freshMenu:ContextMenuItem = null;
-		
+			 
 			private function createInit():void{
 				freshMenu = new ContextMenuItem('刷新');
 				var menu:ContextMenu = new ContextMenu();
@@ -37,6 +39,22 @@
 				
 				
 				
+			}
+			/**
+			 设置最多取多少列数据。
+			 * */
+			public function setMaxRow(maxRow:int):void{
+				this.maxRow=maxRow;
+			}
+			/*****
+			 var orders:XML=<ORDERS/>;
+				orders.@DESC="true";//设置内容是降序，
+				var order:XML=<ORDER/>
+				order.@COLUMN="CREATE_TIME";//可以加多列。
+				orders.appendChild(order);
+			 * *****/
+			public function setOrders(orders:XML):void{
+				this.orders=orders;
 			}
 			public function freshList():void{
 				pagebar1.clear();
@@ -109,9 +127,13 @@
 			var qdoc:XML=<DATAPACKET/>
 			qdoc.@TABLE=this.tbName;
 			qdoc.@ACTION="list";
-			qdoc.@MAXROW="500";
+			if(-1!=this.maxRow){
+				qdoc.@MAXROW=""+this.maxRow;
+			}
+			
 			qdoc.@CONDITION=this.newCondition+this.condition;
-			//Alert.show(qdoc.toXMLString());
+			if(null!=this.orders)
+				qdoc.appendChild(this.orders);
 			var dataService:HTTPService = new HTTPService();
 			dataService.url = UrlService.getListUrl();
 			dataService.contentType="application/xml";     
@@ -186,29 +208,35 @@
         	if(null!=searchp){
         		searchp.visible=true;
         		searchp.height=40;
-        		//Alert.show("setSearchCols in list view");
+        		
         	}
         	
         	this.cols=cols;
         }
         
         private function searchInfo():void{
-        	if(null!=this.cols){
-        		this.newCondition="(";
-        		var first:Boolean=true;
-        		for each(var obj:Object in this.cols){
-        			if(first){
-        				newCondition+=obj["code"]+" like '%"+keyVal.text+"%' "
-        				first=false;
-        			}else{
-        				newCondition+=" or "+obj["code"]+" like '%"+keyVal.text+"%' "
-        			}
-        			
-        		}
-        		newCondition+=") and ";
-        		this.clear();
-        		getDateWithTmpl(null);
+        	try{
+        		
+        		if(null!=this.cols){
+	        		this.newCondition="(";
+	        		var first:Boolean=true;
+	        		for each(var obj:Object in this.cols){
+	        			if(first){
+	        				newCondition+=obj["code"]+" like '%"+keyVal.text+"%' "
+	        				first=false;
+	        			}else{
+	        				newCondition+=" or "+obj["code"]+" like '%"+keyVal.text+"%' "
+	        			}
+	        			
+	        		}
+	        		newCondition+=") and ";
+	        		this.clear();
+	        		getDateWithTmpl(null);
+	        	}
+        	}catch(e:Error){
+        		Alert.show(e.getStackTrace());
         	}
+        	
         }
         
         private function keySearch(e:KeyboardEvent):void{

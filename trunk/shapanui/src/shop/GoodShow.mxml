@@ -14,6 +14,7 @@
 	</mx:Style>
 	<mx:Script>
 		<![CDATA[
+			import com.SharedObjectUtil;
 			import mx.controls.HRule;
 			import mx.containers.HBox;
 			import component.ImageBrowse;
@@ -26,7 +27,7 @@
 			
 			
 			private var idStr:String=null;
-			
+			private var doc:XML=null;
 			private function init():void{
 				if(null!=this.idStr){
 					getData();
@@ -61,10 +62,12 @@
 			private function onDetailResult(e:ResultEvent):void{
 				var tmpdoc:XML=XML(e.result);
 				if(!ResultFilter.filter(tmpdoc))return;
-				///Alert.show(tmpdoc.toXMLString());
+				///Alert.show(tmpdoc.toXMLString());this.doc=
+				this.doc=tmpdoc;
 				showData(tmpdoc);
 			}
 			private function showData(doc:XML):void{
+				
 				var row:XML=doc.TABLEDATA.ROWDATA.ROW[0];
 				if(null!=row){
 					var imgPath=row.@OBJIMG;
@@ -105,7 +108,7 @@
 	            		
 	            		if(null==val || ""==val)continue;
 	            		if("ID"==filedName || "ICON"==filedName || "CODE"==filedName || "NAME"==filedName || "ISNEW"==filedName || "ISTUIJIAN"==filedName || "ISCUXIAO"==filedName )continue;
-	            		if("CUXIAOPRICE"==filedName || "INPRICE"==filedName || "OUTPRICE"==filedName || "NUMBER"==filedName || "ALERT_NUMBER"==filedName || "OUTDATE"==filedName || "BEFOREALERT"==filedName )continue;
+	            		if("MAINTYPE"==filedName || "CUXIAOPRICE"==filedName || "INPRICE"==filedName || "OUTPRICE"==filedName || "NUMBER"==filedName || "ALERT_NUMBER"==filedName || "OUTDATE"==filedName || "BEFOREALERT"==filedName )continue;
 	            		if("DAY_LAZYE"==filedName || "MONTH_LAZYE"==filedName || "OBJIMG"==filedName || "REMARK"==filedName)continue;
 	            		var hbox:HBox=new HBox();
 	            		hbox.percentWidth=100;
@@ -136,6 +139,16 @@
 	            	
 				}
 			}
+			private function add2Cart():void{
+				if(null!=this.doc){
+					
+					var row:XML=this.doc.TABLEDATA.ROWDATA.ROW[0];
+					row.@GETNUMBER="1";
+					 
+					 //Alert.show("add good to cart");
+					SharedObjectUtil.setOrderGood(row);
+				}
+			}
 		]]>
 	</mx:Script>
 	<mx:Box width="100%" height="100%" styleName="label" id="mainBox">
@@ -163,6 +176,10 @@
 				</mx:HBox>
 				<mx:HBox>
 					<mx:Label text="优惠价：" width="60"/><mx:Label id="youhprice" width="40"/><mx:Label text="元"/>
+				</mx:HBox>
+				<mx:HBox>
+					<mx:Label text="选购：" width="60"/>
+					<mx:Button styleName="selbtn" click=" add2Cart();" toolTip="选购"/>
 				</mx:HBox>
 			</mx:Box>
 		</mx:HBox>

@@ -5,6 +5,7 @@
 <mx:Style source="style/main.css"/>
 	<mx:Script>
 		<![CDATA[
+			import view.list.ListPCObjMG;
 			import view.list.ListObjMG;
 			import view.tree.TreeObjectMG;
 			import mx.events.ItemClickEvent;
@@ -20,11 +21,31 @@
 			private function goodmg():void{
 				//var　usergm =new ListObjMG();
 				//usergm.setMeta("用户","user",null);
+				/**
 				var goodmg:ListObjMG=new ListObjMG();
 				goodmg.setMeta("商品明细",null," code<>'admin'");
 				goodmg.title="商品维护";
 				mainp.removeAllChildren();
 				mainp.addChild(goodmg);
+				 * **/
+				var searchCols:Array=new Array();
+				var telobj:Object=new Object();
+				telobj["code"]="CODE";
+				searchCols.push(telobj);
+				var addobj:Object=new Object();
+				addobj["code"]="NAME";
+				searchCols.push(addobj);
+				var stsobj:Object=new Object();
+				stsobj["code"]="REMARK";
+				searchCols.push(stsobj);
+				
+				 mainp.removeAllChildren();
+				var typegood:TypeGood=new TypeGood();
+				typegood.percentWidth=100;
+				typegood.setMeta("商品类型","商品明细","goodlogo");
+				typegood.setSearchCols(searchCols);
+				typegood.setMaxRow(100);
+				mainp.addChild(typegood);
 			}
 			private function zixunmg():void{
 				
@@ -42,6 +63,35 @@
 				mainp.removeAllChildren();
 				mainp.addChild(dizhi);
 			}
+			private function ordermg():void{
+				var ordergm:ListPCObjMG=new ListPCObjMG();
+				ordergm.setMeta("订单","订单明细","ORDER_ID",null,"ID<>-1");
+				ordergm.setAddfun(false);
+				//////////////设置搜索列/////////////////
+				var searchCols:Array=new Array();
+				var telobj:Object=new Object();
+				telobj["code"]="TEL";
+				searchCols.push(telobj);
+				var addobj:Object=new Object();
+				addobj["code"]="ADDRESS";
+				searchCols.push(addobj);
+				var stsobj:Object=new Object();
+				stsobj["code"]="ORDERSTATUS";
+				searchCols.push(stsobj);
+				
+				ordergm.setSearchCols(searchCols);
+				////////////设置排序//////////
+				var orders:XML=<ORDERS/>;
+				orders.@DESC="true";//设置内容是降序，
+				var order:XML=<ORDER/>
+				order.@COLUMN="CREATE_TIME";//可以加多列。
+				orders.appendChild(order);
+				ordergm.setOrders(orders);
+				//////////设置最多取值数量/////////////
+				ordergm.setMaxRow(50);
+				mainp.removeAllChildren();
+				mainp.addChild(ordergm);
+			}
 			private function systemmg(e:ItemClickEvent):void{
 				var lab:String=e.label;
 				if("商品类型"==lab){
@@ -52,7 +102,10 @@
 					zixunmg();
 				}else if("公司地址维护"==lab){
 					dizhimg();
+				}else if("订单管理"==lab){
+					ordermg();
 				}
+				//
 				
 			}
 		]]>
@@ -67,6 +120,7 @@
 					<mx:RadioButton groupName="systemgroup" label="商品维护" styleName="label" />
 					<mx:RadioButton groupName="systemgroup" label="咨询人员维护" styleName="label" />
 					<mx:RadioButton groupName="systemgroup" label="公司地址维护" styleName="label" />
+					<mx:RadioButton groupName="systemgroup" label="订单管理" styleName="label"/>
 					<mx:RadioButton groupName="systemgroup" label="功能维护" styleName="label" visible="false"/>
 				</mx:Panel>
 			</mx:Accordion>	

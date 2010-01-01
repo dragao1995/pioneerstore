@@ -9,7 +9,20 @@
 		private var treetblName:String=null;
 		private var listtblName:String=null;
 		private var compName:String=null;
-		
+		private var cols:Array=null;
+		private var maxRow:int=-1;
+		public function setMaxRow(maxRow:int):void{
+			this.maxRow=maxRow;
+			if(null!=listObj){
+        		listObj.setMaxRow(maxRow);
+        	}
+		}
+        public function setSearchCols(cols:Array):void{
+        	this.cols=cols;
+        	if(null!=listObj){
+        		listObj.setSearchCols(this.cols);
+        	}
+        }
 		var listObj:ListObjMG=null;
 		public function setMeta(treetblName:String,listtblName:String,compName:String):void{
 			this.treetblName=treetblName;
@@ -27,9 +40,11 @@
 				this.addChild(treecomp);
 				if(null==listObj){
 					listObj=new ListObjMG();
+					
 					this.addChild(listObj);
 				}
-				
+				listObj.setSearchCols(this.cols);
+				listObj.setMaxRow(this.maxRow);
 			}
 			private function areaSelected(ee:TreeEvent):void{
 				var node:Object=ee.treeNode;

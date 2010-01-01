@@ -10,7 +10,7 @@ package com.pioneer.http
 		}
 	
 	//private static var basePath:String=SharedObjectUtil.getServiceURL();
-	private static var basePath:String="http://127.0.0.1:8899/store/";
+	private static var basePath:String="http://127.0.0.1:7777/store/";
 	public static function getServiceUrl():String{
 		return basePath;
 	}
@@ -29,6 +29,10 @@ package com.pioneer.http
 	
 	public static function getDetailUrl():String{
 		return basePath+"CDSServlet"
+		//return "mode/data/detaildoc.xml";
+	}
+	public static function getPCCDSUrl():String{
+		return basePath+"OrderProcServlet"
 		//return "mode/data/detaildoc.xml";
 	}
 	public static function getCDSActionUrl():String{

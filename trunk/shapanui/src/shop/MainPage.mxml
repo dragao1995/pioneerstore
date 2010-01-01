@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" xmlns:list="view.list.*"
-	
+	creationComplete="getDefaultGood();"
 	xmlns:shop="shop.*">
 	<mx:Style source="style/main.css"/>
 	<mx:Script>
 		<![CDATA[
+			import com.pioneer.http.UrlService;
+			import mx.rpc.http.mxml.HTTPService;
+			import com.ResultFilter;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
 			import mx.controls.Alert;
 			import event.list.ListClickEnent;
 			private function initTuiJian():void{
@@ -49,7 +54,51 @@
 					searchGood();
 				}
 			}
+			public function showDetailById(idStr:String):void{
+				if(null==goodShow){
+					goodShow=new GoodShow();
+					goodshowp.removeAllChildren();
+					goodshowp.addChild(goodShow);
+				}
+				goodShow.setId(idStr);
+			}
+			private function getDefaultGood():void{
+				var qdoc:XML=<DATAPACKETS/>;
+				qdoc.@ACTION="detail";
+				qdoc.@TABLE="商品类型";
+				qdoc.@ID="-1";
+				var tmplService:HTTPService = new HTTPService();
+				//tmplService.url = "mode/data/detaildoc.xml";
+				tmplService.url = UrlService.getDetailUrl();
+				tmplService.contentType="application/xml";     
+				tmplService.method="POST";
+				tmplService.resultFormat = "e4x";
+				tmplService.showBusyCursor=true;
+				tmplService.addEventListener(FaultEvent.FAULT, onFaultHttpService);
+				tmplService.addEventListener(ResultEvent.RESULT, onXMLResult);
+				tmplService.send(qdoc);
+			}
 			
+			private function onFaultHttpService(e:FaultEvent):void
+			{
+				Alert.show("连接服务器错误！");
+			}
+			protected function onXMLResult(e:ResultEvent):void{
+				var tmpdoc:XML=XML(e.result);
+				if(!ResultFilter.filter(tmpdoc))return;
+				//如果没有记录，加一条空记录，用于显示
+				if(null!=tmpdoc){
+					var row:XML=tmpdoc.TABLEDATA.ROWDATA.ROW[0];
+					if(null!=row){
+						try{
+							this.showDetailById(row.@GOOD);
+						}catch(e:Error){
+							
+						}
+						
+					}
+				}
+			}
 		]]>
 	</mx:Script>
 	<mx:HDividedBox width="100%" height="100%" horizontalGap="1">

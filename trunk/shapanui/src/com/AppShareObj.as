@@ -14,8 +14,8 @@ package com
 		
 		private static var menus:Array=null;
 		//public static var appcode:String="ctl";
-		public static var appcode:String="store";
-		//public static var appcode:String="shop";
+		//public static var appcode:String="store";
+		public static var appcode:String="shop";
 		public static var companyName:String="移动";
 		
 		public function AppShareObj()
